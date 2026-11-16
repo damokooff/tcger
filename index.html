@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>TCG Wiki Master</title>
+  <title>DAMOKO tcg</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🛠️%3C/text%3E%3C/svg%3E">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
@@ -18,32 +19,7 @@
     #pack-modal, #detail-modal { transition: opacity .25s ease; }
     #pack-modal.closing, #detail-modal.closing { opacity: 0; }
 
-    /* ---- Pack burst ---- */
-    .pack-box { filter: drop-shadow(0 0 30px rgba(139,92,246,.6));
-                animation: packIdle 1.2s ease-in-out infinite; }
-    @keyframes packIdle { 0%,100%{transform:scale(1) rotate(-3deg)} 50%{transform:scale(1.08) rotate(3deg)} }
-    .pack-box.shaking { animation: packShake .12s ease-in-out infinite; }
-    @keyframes packShake {
-      0%,100%{transform:translate(0,0) rotate(0) scale(1.15)}
-      25%{transform:translate(-8px,4px) rotate(-10deg) scale(1.2)}
-      75%{transform:translate(8px,-4px) rotate(10deg) scale(1.2)}
-    }
-    .pack-box.burst { animation: packBurst .4s ease-out forwards; }
-    @keyframes packBurst {
-      0%{transform:scale(1.2);opacity:1;filter:brightness(1)}
-      40%{transform:scale(2.2);opacity:1;filter:brightness(3)}
-      100%{transform:scale(3.5);opacity:0;filter:brightness(5)}
-    }
-    .flash { position: absolute; width:120px; height:120px;
-             background: radial-gradient(circle,#fff 0%,transparent 70%);
-             border-radius:50%; opacity:0; pointer-events:none; }
-    .flash.active { animation: flashOut .5s ease-out; }
-    @keyframes flashOut {
-      0%{opacity:0;transform:scale(.5)} 30%{opacity:1;transform:scale(1.5)}
-      100%{opacity:0;transform:scale(5)}
-    }
-
-    /* ---- Carte TCG full-art ---- */
+    /* ---- CARTE TCG full-art ---- */
     .tcg-card {
       position: relative;
       aspect-ratio: 5 / 7;
@@ -54,9 +30,24 @@
       cursor: pointer;
       user-select: none;
       will-change: transform;
-      container-type: inline-size;   /* <- clé pour cqw */
+      container-type: inline-size;
     }
     .tcg-card .tcg-bg { position: absolute; inset: 0; }
+
+    /* Emoji ÉNORME (fallback px pour vieux navigateurs) */
+    .tcg-card .tcg-emoji {
+      position: absolute;
+      top: 0; bottom: 22%; left: 0; right: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 90px;          /* fallback */
+      font-size: 70cqw;          /* moderne */
+      line-height: 1;
+      filter: drop-shadow(0 10px 20px rgba(0,0,0,.6));
+      transform: translateZ(20px);
+      transition: transform .3s;
+    }
+    .tcg-card:hover .tcg-emoji { transform: translateZ(35px) scale(1.05); }
+
     .tcg-card .tcg-shine {
       position: absolute; inset: 0; pointer-events: none;
       background: radial-gradient(circle at var(--mx,50%) var(--my,50%),
@@ -64,17 +55,7 @@
       opacity: 0; transition: opacity .3s;
     }
     .tcg-card:hover .tcg-shine { opacity: 1; }
-    .tcg-card .tcg-emoji {
-      position: absolute; inset: 0;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 55cqw;               /* <- 55% de la largeur de la carte */
-      line-height: 1;
-      filter: drop-shadow(0 10px 20px rgba(0,0,0,.6));
-      transform: translateZ(20px);
-      transition: transform .3s;
-      padding-bottom: 20%;
-    }
-    .tcg-card:hover .tcg-emoji { transform: translateZ(35px) scale(1.05); }
+
     .tcg-card .tcg-vignette {
       position: absolute; inset: 0;
       background:
@@ -88,34 +69,47 @@
       background: linear-gradient(180deg, transparent, rgba(0,0,0,.95));
       text-align: center;
     }
+
+    /* TEXTE ÉNORME */
     .tcg-card .tcg-name {
-      font-weight: 800; font-size: 3.8cqw; min-font-size: 10px;
+      font-weight: 900;
+      font-size: 14px;                              /* fallback */
+      font-size: clamp(12px, 8cqw, 22px);           /* moderne */
       text-shadow: 0 2px 6px rgba(0,0,0,.9);
-      line-height: 1.1;
+      line-height: 1.15;
+      letter-spacing: 0.01em;
     }
     .tcg-card .tcg-rarity {
-      font-size: 2.8cqw; letter-spacing: .12em; text-transform: uppercase;
-      margin-top: 3px; font-weight: 700;
+      font-size: 11px;                              /* fallback */
+      font-size: clamp(9px, 5cqw, 15px);            /* moderne */
+      letter-spacing: .15em; text-transform: uppercase;
+      margin-top: 4px; font-weight: 800;
     }
     .tcg-card .tcg-qty {
       position: absolute; top: 8px; right: 8px;
-      background: rgba(0,0,0,.75); backdrop-filter: blur(4px);
-      padding: 2px 8px; border-radius: 999px;
-      font-size: 3cqw; font-weight: 700;
-      border: 1px solid rgba(255,255,255,.15);
+      background: rgba(0,0,0,.8); backdrop-filter: blur(4px);
+      padding: 3px 10px; border-radius: 999px;
+      font-size: 12px;                              /* fallback */
+      font-size: clamp(10px, 5cqw, 16px);
+      font-weight: 800;
+      border: 1px solid rgba(255,255,255,.2);
+      z-index: 3;
     }
     .tcg-card .tcg-new {
       position: absolute; top: -6px; left: 50%; transform: translateX(-50%);
       background: linear-gradient(135deg,#fbbf24,#f59e0b);
-      color: #0f172a; font-weight: 900; font-size: 2.8cqw;
-      padding: 3px 10px; border-radius: 999px;
+      color: #0f172a; font-weight: 900;
+      font-size: 11px;                              /* fallback */
+      font-size: clamp(10px, 4cqw, 14px);
+      padding: 4px 12px; border-radius: 999px;
       box-shadow: 0 0 20px rgba(251,191,36,.7);
       z-index: 5;
+      white-space: nowrap;
       animation: badgePop .5s cubic-bezier(.2,1.6,.4,1) both;
     }
     @keyframes badgePop { from{transform:translateX(-50%) scale(0) rotate(-20deg)} to{transform:translateX(-50%) scale(1) rotate(0)} }
 
-    /* ---- Raretés : bordure + glow ---- */
+    /* Raretés */
     .tcg-card.rarity-common     { box-shadow: 0 0 0 2px #94a3b8, 0 8px 30px -10px rgba(148,163,184,.5); }
     .tcg-card.rarity-uncommon   { box-shadow: 0 0 0 2px #22c55e, 0 8px 30px -8px rgba(34,197,94,.6); }
     .tcg-card.rarity-rare       { box-shadow: 0 0 0 2px #3b82f6, 0 8px 40px -8px rgba(59,130,246,.7); }
@@ -125,17 +119,134 @@
     .tcg-card.rarity-legendary .tcg-bg { animation: holoShift 4s linear infinite; background-size: 200% 200%; }
     @keyframes holoShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
 
-    .reveal-card { animation: cardDeal .5s cubic-bezier(.2,.9,.3,1.2) both; }
-    @keyframes cardDeal {
-      from { opacity: 0; transform: scale(.3) rotate(-15deg); }
-      to   { opacity: 1; transform: scale(1) rotate(0); }
+    /* ---- ANIMATION D'OUVERTURE ---- */
+    .reveal-stage {
+      position: relative; width: 100%; height: 440px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .reveal-pack {
+      font-size: 170px;
+      animation: packIdle 1.2s ease-in-out infinite;
+      filter: drop-shadow(0 0 40px rgba(139,92,246,.7));
+      z-index: 10;
+      position: relative;
+    }
+    @keyframes packIdle {
+      0%,100% { transform: scale(1) rotate(-3deg); }
+      50%     { transform: scale(1.08) rotate(3deg); }
+    }
+    .reveal-pack.charging { animation: packShake .1s ease-in-out infinite; }
+    @keyframes packShake {
+      0%,100% { transform: translate(0,0) rotate(0) scale(1.15); }
+      25%     { transform: translate(-9px,4px) rotate(-8deg) scale(1.22); }
+      75%     { transform: translate(9px,-4px) rotate(8deg) scale(1.22); }
+    }
+    .reveal-pack.burst { animation: packBurst .45s ease-out forwards; }
+    @keyframes packBurst {
+      0%   { transform: scale(1.2); opacity: 1; filter: brightness(1); }
+      40%  { transform: scale(2.5); opacity: 1; filter: brightness(3.5); }
+      100% { transform: scale(4); opacity: 0; filter: brightness(6); }
     }
 
-    body.shake { animation: screenShake .3s ease-out; }
+    /* Fan de mini-cards derrière le pack */
+    .reveal-fan {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 200px; height: 200px;
+      pointer-events: none;
+    }
+    .reveal-mini {
+      position: absolute; top: 50%; left: 50%;
+      width: 64px; height: 90px;
+      background: repeating-linear-gradient(45deg, #1e293b 0 10px, #334155 10px 20px);
+      border: 2px solid #475569;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 32px;
+      transform-origin: center;
+      transform: translate(-50%, -50%) rotate(calc(var(--i) * 18deg - 36deg)) translateY(-30px) scale(0.3);
+      opacity: 0;
+      transition: all 0.5s cubic-bezier(.2,1.6,.4,1);
+    }
+    .reveal-fan.visible .reveal-mini {
+      opacity: 0.85;
+      transform: translate(-50%, -50%) rotate(calc(var(--i) * 18deg - 36deg)) translateY(-30px) scale(1);
+      transition-delay: calc(var(--i) * 60ms);
+    }
+    .reveal-fan.charging .reveal-mini {
+      animation: miniShake .12s ease-in-out infinite;
+    }
+    @keyframes miniShake {
+      0%,100% { transform: translate(-50%, -50%) rotate(calc(var(--i) * 18deg - 36deg)) translateY(-30px) scale(1); }
+      50%     { transform: translate(-50%, -50%) rotate(calc(var(--i) * 18deg - 36deg + 5deg)) translateY(-38px) scale(1.02); }
+    }
+    .reveal-fan.burst .reveal-mini {
+      opacity: 0;
+      transform: translate(-50%, -50%) rotate(calc(var(--i) * 72deg)) translateY(-350px) scale(0.4);
+      transition-delay: calc(var(--i) * 30ms);
+    }
+
+    .reveal-flash {
+      position: absolute; top: 50%; left: 50%;
+      width: 200px; height: 200px;
+      transform: translate(-50%, -50%);
+      background: radial-gradient(circle, #fff 0%, transparent 70%);
+      border-radius: 50%;
+      opacity: 0; pointer-events: none;
+    }
+    .reveal-flash.active { animation: flashOut .6s ease-out; }
+    @keyframes flashOut {
+      0%   { opacity: 0; transform: translate(-50%,-50%) scale(0.5); }
+      30%  { opacity: 1; transform: translate(-50%,-50%) scale(1.5); }
+      100% { opacity: 0; transform: translate(-50%,-50%) scale(6); }
+    }
+
+    /* ---- Cartes du reveal : flip 3D individuel ---- */
+    .reveal-slot {
+      perspective: 1200px;
+      aspect-ratio: 5 / 7;
+      position: relative;
+      container-type: inline-size;
+    }
+    .reveal-slot-inner {
+      position: relative; width: 100%; height: 100%;
+      transform-style: preserve-3d;
+      transition: transform 0.8s cubic-bezier(.4,.1,.2,1);
+      transform: rotateY(180deg);
+    }
+    .reveal-slot.flipped .reveal-slot-inner { transform: rotateY(0deg); }
+    .reveal-back {
+      position: absolute; inset: 0;
+      background: repeating-linear-gradient(45deg, #1e293b 0 10px, #334155 10px 20px);
+      border-radius: 16px;
+      border: 2px solid #475569;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 60px;
+      font-size: 32cqw;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      transform: rotateY(180deg);
+      box-shadow: 0 8px 30px -10px rgba(139,92,246,.5);
+    }
+    .reveal-front {
+      position: absolute; inset: 0;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+    .reveal-slot.pre-charge {
+      animation: preShake .15s ease-in-out 3;
+    }
+    @keyframes preShake {
+      0%,100% { transform: translateX(0); }
+      25%     { transform: translateX(-5px) rotate(-1deg); }
+      75%     { transform: translateX(5px) rotate(1deg); }
+    }
+
+    body.shake { animation: screenShake .35s ease-out; }
     @keyframes screenShake {
-      0%,100%{transform:translate(0,0)} 20%{transform:translate(-4px,3px)}
-      40%{transform:translate(4px,-3px)} 60%{transform:translate(-3px,-2px)}
-      80%{transform:translate(3px,2px)}
+      0%,100%{transform:translate(0,0)} 20%{transform:translate(-5px,4px)}
+      40%{transform:translate(5px,-4px)} 60%{transform:translate(-4px,-3px)}
+      80%{transform:translate(4px,3px)}
     }
 
     #btn-daily.ready { animation: dailyPulse 1.5s ease-in-out infinite; }
@@ -167,7 +278,7 @@
 <!-- AUTH -->
 <div id="auth-screen" class="min-h-screen flex items-center justify-center p-4">
   <div class="bg-slate-800/70 backdrop-blur-xl rounded-2xl p-8 w-full max-w-md space-y-4 shadow-2xl border border-white/10">
-    <h1 class="text-2xl font-bold text-center">⚔️ TCG Wiki Master</h1>
+    <h1 class="text-3xl font-bold text-center">🛠️ DAMOKO tcg</h1>
     <p class="text-slate-400 text-sm text-center -mt-2">1000 or + 10 packs gratuits/heure 🎉</p>
     <input id="email"    type="email"    placeholder="Email"
            class="w-full p-3 rounded-lg bg-slate-700/60 border border-white/10 focus:outline-none focus:ring-2 ring-indigo-500">
@@ -186,7 +297,7 @@
 <div id="main-app" class="hidden">
   <header class="bg-slate-900/70 backdrop-blur-xl px-6 py-3 flex justify-between items-center flex-wrap gap-2 sticky top-0 z-20 border-b border-white/5">
     <div class="flex items-center gap-3">
-      <h1 class="font-bold text-lg">⚔️ TCG Wiki Master</h1>
+      <h1 class="font-bold text-xl">🛠️ DAMOKO tcg</h1>
       <span id="user-badge" class="text-sm text-slate-300"></span>
       <span id="role-badge" class="text-xs px-2 py-0.5 rounded font-semibold bg-slate-600"></span>
     </div>
@@ -245,15 +356,14 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 const ROLE_COLORS = { admin:'bg-red-600', super_modo:'bg-orange-500', modo:'bg-blue-500', user:'bg-slate-600' };
 
 const RARITY_STYLE = {
-  common:    { accent:'#94a3b8', name:'Commune',     bg:['#64748b','#334155'], glow:'rgba(148,163,184,.6)' },
-  uncommon:  { accent:'#22c55e', name:'Peu commune', bg:['#22c55e','#14532d'], glow:'rgba(34,197,94,.6)' },
-  rare:      { accent:'#3b82f6', name:'Rare',        bg:['#3b82f6','#1e3a8a'], glow:'rgba(59,130,246,.7)' },
-  epic:      { accent:'#a855f7', name:'Épique',      bg:['#a855f7','#581c87'], glow:'rgba(168,85,247,.8)' },
-  legendary: { accent:'#fbbf24', name:'Légendaire',  bg:['#fbbf24','#7c2d12'], glow:'rgba(251,191,36,.9)' }
+  common:    { accent:'#94a3b8', name:'Commune',     bg:['#64748b','#334155'] },
+  uncommon:  { accent:'#22c55e', name:'Peu commune', bg:['#22c55e','#14532d'] },
+  rare:      { accent:'#3b82f6', name:'Rare',        bg:['#3b82f6','#1e3a8a'] },
+  epic:      { accent:'#a855f7', name:'Épique',      bg:['#a855f7','#581c87'] },
+  legendary: { accent:'#fbbf24', name:'Légendaire',  bg:['#fbbf24','#7c2d12'] }
 };
 const SELL_PRICE = { common: 30, uncommon: 75, rare: 200, epic: 600, legendary: 2000 };
 
-// ============================================================
 function toast(msg, type='info') {
   const el = $('toast');
   el.textContent = msg;
@@ -264,7 +374,6 @@ function toast(msg, type='info') {
   el._t = setTimeout(()=>hide('toast'), 3500);
 }
 
-// Couleur du fond = rareté (avec légère variation par seed)
 function cardBg(card) {
   const r = card.rarity || 'common';
   const pal = (RARITY_STYLE[r] || RARITY_STYLE.common).bg;
@@ -298,8 +407,7 @@ function cardHTML(card, opts = {}) {
         <div class="tcg-name">${name}</div>
         <div class="tcg-rarity" style="color:${st.accent}">${st.name}</div>
       </div>
-    </div>
-  `;
+    </div>`;
 }
 
 function attachTilt(el) {
@@ -320,7 +428,6 @@ function attachTilt(el) {
     if (inner) inner.style.transform = '';
   });
 }
-
 function tiltAll(root) {
   root.querySelectorAll('.tcg-card').forEach(attachTilt);
 }
@@ -353,7 +460,6 @@ async function loadProfile() {
   const { data } = await sb.from('profiles').select('*').eq('id', user.id).single();
   return data;
 }
-
 async function refreshProfile() {
   profile = await loadProfile();
   if (!profile) return;
@@ -400,12 +506,10 @@ async function loadPackStatuses() {
   packStatuses = {};
   (data || []).forEach(s => packStatuses[s.pack_id] = s);
 }
-
 async function renderPacks() {
   const c = $('view-packs');
   c.innerHTML = '<div class="text-slate-400">Chargement…</div>';
-
-  const [{ data: packs, error }, _] = await Promise.all([
+  const [{ data: packs, error }] = await Promise.all([
     sb.from('packs').select('*').eq('is_active', true).order('price'),
     loadPackStatuses()
   ]);
@@ -413,9 +517,7 @@ async function renderPacks() {
 
   c.innerHTML = `
     <h2 class="text-xl font-bold mb-2">Packs disponibles</h2>
-    <p class="text-slate-400 text-sm mb-4">
-      Chaque pack contient <b class="text-indigo-400">5 cartes</b>. Les packs gratuits se rechargent toutes les heures.
-    </p>
+    <p class="text-slate-400 text-sm mb-4">Chaque pack contient <b class="text-indigo-400">5 cartes</b>. Les packs gratuits se rechargent toutes les heures.</p>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       ${packs.map(p => {
         const st = packStatuses[p.id] || { free_remaining: 0, free_per_hour: p.free_per_hour, seconds_left: 0 };
@@ -423,20 +525,19 @@ async function renderPacks() {
         const canOpen = hasFree || profile.gold >= p.price;
         const min = Math.floor(st.seconds_left / 60);
         const sec = st.seconds_left % 60;
-
         return `
           <div class="pack-tile bg-slate-800/60 backdrop-blur border-2 border-slate-700 rounded-2xl p-5">
             <div class="flex justify-between items-start mb-3">
-              <div class="text-6xl">🎴</div>
+              <div class="text-7xl">🎴</div>
               ${hasFree ? `
-                <span class="free-badge bg-emerald-600 text-white text-xs font-bold px-3 py-1 rounded-full">
+                <span class="free-badge bg-emerald-600 text-white text-sm font-bold px-3 py-1 rounded-full">
                   🎁 ${st.free_remaining}/${st.free_per_hour}
                 </span>` : `
                 <span class="bg-slate-700 text-slate-300 text-xs font-semibold px-3 py-1 rounded-full">
                   ⏳ ${min}m${sec.toString().padStart(2,'0')}s
                 </span>`}
             </div>
-            <h3 class="font-bold text-lg">${p.name}</h3>
+            <h3 class="font-bold text-xl">${p.name}</h3>
             <p class="text-slate-400 text-sm mb-3">
               ${hasFree
                 ? `<span class="text-emerald-400 font-semibold">Gratuit</span> · sinon ${p.price} or`
@@ -456,11 +557,9 @@ async function renderPacks() {
                     data-pack="${p.id}" ${!canOpen ? 'disabled' : ''}>
               ${hasFree ? '🎁 Ouvrir gratuitement' : `Ouvrir (${p.price} or)`}
             </button>
-          </div>
-        `;
+          </div>`;
       }).join('')}
-    </div>
-  `;
+    </div>`;
   document.querySelectorAll('.open-pack-btn').forEach(b => {
     b.onclick = () => openPack(b.dataset.pack, b);
   });
@@ -476,32 +575,48 @@ async function openPack(packId, btn) {
 }
 
 // ============================================================
-// REVEAL
+// 🎬 ANIMATION D'OUVERTURE CINÉMATIQUE
 // ============================================================
 async function showReveal(cards) {
-  $('pack-modal-content').innerHTML = `
-    <div class="relative flex items-center justify-center" style="min-height:400px">
-      <div class="flash" id="flash"></div>
-      <div class="pack-box text-[160px] select-none" id="pack-box">🎴</div>
-    </div>`;
-  show('pack-modal');
-  const box = $('pack-box');
-  await sleep(600);
-  box.classList.add('shaking');
-  await sleep(600);
-  box.classList.remove('shaking');
-  box.classList.add('burst');
-  $('flash').classList.add('active');
-  document.body.classList.add('shake');
-  setTimeout(()=>document.body.classList.remove('shake'), 350);
-  await sleep(350);
-
-  const totalBonus = cards.reduce((s,c)=> s + (c.bonus_gold||0), 0);
-  const wasFree = cards[0]?.was_free;
+  const container = $('pack-modal-content');
   const isMobile = window.innerWidth < 768;
   const gridCols = isMobile ? 'grid-cols-2' : 'grid-cols-5';
+  const totalBonus = cards.reduce((s,c) => s + (c.bonus_gold||0), 0);
+  const wasFree = cards[0]?.was_free;
 
-  $('pack-modal-content').innerHTML = `
+  // ---------- PHASE 1 : Pack + fan de cartes qui apparaissent ----------
+  container.innerHTML = `
+    <div class="reveal-stage">
+      <div class="reveal-fan" id="reveal-fan">
+        ${[0,1,2,3,4].map(i => `<div class="reveal-mini" style="--i:${i}">🎴</div>`).join('')}
+      </div>
+      <div class="reveal-pack" id="reveal-pack">🎴</div>
+      <div class="reveal-flash" id="reveal-flash"></div>
+    </div>`;
+  show('pack-modal');
+
+  // Apparition du fan
+  await sleep(50);
+  $('reveal-fan').classList.add('visible');
+  await sleep(750);
+
+  // ---------- PHASE 2 : Charge (shake) ----------
+  $('reveal-pack').classList.add('charging');
+  $('reveal-fan').classList.add('charging');
+  await sleep(700);
+
+  // ---------- PHASE 3 : Burst ----------
+  $('reveal-pack').classList.remove('charging');
+  $('reveal-pack').classList.add('burst');
+  $('reveal-fan').classList.remove('charging');
+  $('reveal-fan').classList.add('burst');
+  $('reveal-flash').classList.add('active');
+  document.body.classList.add('shake');
+  setTimeout(() => document.body.classList.remove('shake'), 400);
+  await sleep(450);
+
+  // ---------- PHASE 4 : Grille de cartes face cachée ----------
+  container.innerHTML = `
     <div class="flex flex-col items-center gap-4">
       <div class="text-center">
         ${wasFree ? '<span class="bg-emerald-600 px-3 py-1 rounded-full text-xs font-bold">🎁 PACK GRATUIT</span>' : ''}
@@ -509,33 +624,75 @@ async function showReveal(cards) {
       </div>
       <div class="grid ${gridCols} gap-3 w-full max-w-5xl px-2">
         ${cards.map((c,i) => `
-          <div class="reveal-card" style="animation-delay:${i*80}ms">
-            ${cardHTML(c, { isNew: c.is_new })}
-          </div>
-        `).join('')}
+          <div class="reveal-slot" data-slot="${i}" data-rarity="${c.rarity}">
+            <div class="reveal-slot-inner">
+              <div class="reveal-back">🎴</div>
+              <div class="reveal-front">${cardHTML(c, { isNew: c.is_new })}</div>
+            </div>
+          </div>`).join('')}
       </div>
-      <div id="reveal-footer" class="opacity-0 text-center space-y-2 mt-2 transition-opacity">
+      <div id="reveal-footer" class="opacity-0 text-center space-y-2 mt-2 transition-opacity duration-500">
         ${totalBonus > 0 ? `<p class="text-emerald-400 font-bold text-lg">+${totalBonus} or bonus total !</p>` : ''}
         <button id="close-reveal" class="bg-indigo-600 hover:bg-indigo-500 px-8 py-2.5 rounded-lg font-semibold
                                        hover:scale-[1.03] active:scale-[0.97]">Continuer</button>
       </div>
     </div>`;
 
-  tiltAll($('pack-modal-content'));
+  // ---------- PHASE 5 : Flip séquentiel avec effets par carte ----------
+  const rarityOrder = { common:0, uncommon:1, rare:2, epic:3, legendary:4 };
+  let bestRarity = 'common';
+  const slots = document.querySelectorAll('.reveal-slot');
 
-  const best = cards.reduce((m,c) => {
-    const order = { common:0, uncommon:1, rare:2, epic:3, legendary:4 };
-    return order[c.rarity] > order[m] ? c.rarity : m;
-  }, 'common');
-  if (best === 'legendary') {
-    confetti({ particleCount: 300, spread: 140, origin:{y:0.6}, colors:['#fbbf24','#f59e0b','#fff'] });
-    setTimeout(()=>confetti({particleCount:150,angle:60,spread:80,origin:{x:0,y:0.7},colors:['#fbbf24','#fff']}),200);
-    setTimeout(()=>confetti({particleCount:150,angle:120,spread:80,origin:{x:1,y:0.7},colors:['#fbbf24','#fff']}),200);
-  } else if (best === 'epic') {
-    confetti({ particleCount: 150, spread: 100, origin:{y:0.6}, colors:['#a855f7','#c084fc','#e9d5ff'] });
+  for (let i = 0; i < slots.length; i++) {
+    const slot = slots[i];
+    const rarity = cards[i].rarity;
+    const isSpecial = rarity === 'epic' || rarity === 'legendary';
+
+    // Pré-charge (petit shake) pour épique/légendaire
+    if (isSpecial) {
+      slot.classList.add('pre-charge');
+      await sleep(280);
+      slot.classList.remove('pre-charge');
+    }
+
+    // Flip !
+    slot.classList.add('flipped');
+    if (rarityOrder[rarity] > rarityOrder[bestRarity]) bestRarity = rarity;
+
+    // Confetti localisé sur la carte pour épique/légendaire
+    if (isSpecial) {
+      const rect = slot.getBoundingClientRect();
+      const x = (rect.left + rect.width/2) / window.innerWidth;
+      const y = (rect.top + rect.height/2) / window.innerHeight;
+      confetti({
+        particleCount: rarity === 'legendary' ? 70 : 30,
+        spread: rarity === 'legendary' ? 110 : 65,
+        origin: { x, y },
+        colors: rarity === 'legendary'
+          ? ['#fbbf24','#f59e0b','#fde68a','#fff']
+          : ['#a855f7','#c084fc','#e9d5ff']
+      });
+      if (rarity === 'legendary') {
+        document.body.classList.add('shake');
+        setTimeout(() => document.body.classList.remove('shake'), 400);
+      }
+    }
+
+    await sleep(isSpecial ? 450 : 280);
   }
 
-  setTimeout(() => $('reveal-footer')?.classList.remove('opacity-0'), 1500);
+  // ---------- PHASE 6 : Tilt après tous les flips ----------
+  tiltAll($('pack-modal-content'));
+
+  // Confetti global si légendaire dans le lot
+  if (bestRarity === 'legendary') {
+    setTimeout(() => {
+      confetti({ particleCount: 200, spread: 140, origin:{y:0.6}, colors:['#fbbf24','#f59e0b','#fff'] });
+    }, 200);
+  }
+
+  await sleep(400);
+  $('reveal-footer').classList.remove('opacity-0');
   $('close-reveal').onclick = closeReveal;
 }
 
@@ -589,8 +746,7 @@ async function renderCollection() {
             }, { qty: i.quantity })}
           </div>`).join('')}
       </div>
-    `).join('')}
-  `;
+    `).join('')}`;
   tiltAll(c);
 
   window.__collectionMap = {};
@@ -613,7 +769,7 @@ function showCardDetail(cardId) {
 
   $('detail-modal-content').innerHTML = `
     <div class="bg-slate-800/95 rounded-2xl p-6 max-w-sm w-full border border-white/10">
-      <div class="mx-auto mb-4" style="max-width:260px">${cardHTML(card)}</div>
+      <div class="mx-auto mb-4" style="max-width:280px">${cardHTML(card)}</div>
       <h3 class="font-bold text-center text-lg mb-1">${card.name}</h3>
       <p class="text-center text-sm mb-4" style="color:${st.accent}">${st.name}</p>
       <div class="text-xs text-slate-400 space-y-1 mb-4 bg-slate-900/60 rounded-lg p-3">
@@ -653,15 +809,11 @@ async function sellDuplicate(cardId, name, qty = 1) {
 async function renderFriends() {
   const c = $('view-friends');
   c.innerHTML = '<div class="text-slate-400">Chargement…</div>';
-
   const [{ data: friends }, { data: requests }] = await Promise.all([
-    sb.rpc('friend_list'),
-    sb.rpc('friend_requests')
+    sb.rpc('friend_list'), sb.rpc('friend_requests')
   ]);
-
   c.innerHTML = `
     <h2 class="text-xl font-bold mb-4">👥 Amis</h2>
-
     <div class="bg-slate-800/60 rounded-2xl p-4 mb-4 border border-white/10">
       <h3 class="font-bold mb-2 text-sm text-slate-300">➕ Ajouter un ami</h3>
       <div class="flex gap-2">
@@ -670,7 +822,6 @@ async function renderFriends() {
         <button id="friend-send" class="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg font-semibold text-sm">Envoyer</button>
       </div>
     </div>
-
     ${requests && requests.length ? `
       <div class="bg-slate-800/60 rounded-2xl p-4 mb-4 border border-amber-500/30">
         <h3 class="font-bold mb-2 text-sm text-amber-300">📩 Demandes reçues (${requests.length})</h3>
@@ -679,15 +830,12 @@ async function renderFriends() {
             <div class="flex justify-between items-center bg-slate-900/60 rounded-lg p-2">
               <span class="text-sm font-semibold">${r.from_username}</span>
               <div class="flex gap-1">
-                <button onclick="respondFriend(${r.id},true)"
-                        class="bg-emerald-600 hover:bg-emerald-500 px-3 py-1 rounded-lg text-xs font-semibold">✓ Accepter</button>
-                <button onclick="respondFriend(${r.id},false)"
-                        class="bg-red-600 hover:bg-red-500 px-3 py-1 rounded-lg text-xs font-semibold">✗ Refuser</button>
+                <button onclick="respondFriend(${r.id},true)" class="bg-emerald-600 hover:bg-emerald-500 px-3 py-1 rounded-lg text-xs font-semibold">✓</button>
+                <button onclick="respondFriend(${r.id},false)" class="bg-red-600 hover:bg-red-500 px-3 py-1 rounded-lg text-xs font-semibold">✗</button>
               </div>
             </div>`).join('')}
         </div>
       </div>` : ''}
-
     <div class="bg-slate-800/60 rounded-2xl p-4 border border-white/10">
       <h3 class="font-bold mb-2 text-sm text-slate-300">🎉 Mes amis (${friends?.length || 0})</h3>
       ${!friends?.length ? '<p class="text-slate-400 text-sm">Aucun ami.</p>' : `
@@ -699,16 +847,13 @@ async function renderFriends() {
                 <span class="text-xs px-1.5 py-0.5 rounded ${ROLE_COLORS[f.role]}">${f.role}</span>
                 <span class="text-xs text-slate-400">💰 ${f.gold}</span>
               </div>
-              <button onclick="removeFriend('${f.friend_id}')"
-                      class="bg-red-700 hover:bg-red-600 px-2 py-1 rounded-lg text-xs">Retirer</button>
+              <button onclick="removeFriend('${f.friend_id}')" class="bg-red-700 hover:bg-red-600 px-2 py-1 rounded-lg text-xs">Retirer</button>
             </div>`).join('')}
         </div>`}
     </div>`;
-
   $('friend-send').onclick = sendFriendRequest;
   $('friend-input').addEventListener('keydown', e => { if (e.key === 'Enter') sendFriendRequest(); });
 }
-
 async function sendFriendRequest() {
   const name = $('friend-input').value.trim();
   if (!name) return;
@@ -733,7 +878,7 @@ async function removeFriend(friendId) {
 }
 
 // ============================================================
-// ADMIN v3 (onglets)
+// ADMIN v3
 // ============================================================
 async function renderAdmin() {
   const c = $('view-admin');
@@ -746,11 +891,9 @@ async function renderAdmin() {
       <button data-tab="logs"  class="admin-tab px-3 py-2 rounded-lg text-sm font-semibold ${adminTab==='logs'?'active':''}">📜 Logs</button>
     </div>
     <div id="admin-content"></div>`;
-
   document.querySelectorAll('.admin-tab').forEach(b => {
     b.onclick = () => { adminTab = b.dataset.tab; renderAdmin(); };
   });
-
   const content = $('admin-content');
   if (adminTab === 'users') await renderAdminUsers(content);
   else if (adminTab === 'cards') await renderAdminCards(content);
@@ -772,26 +915,20 @@ async function renderAdminUsers(content) {
     ${s ? `
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
       <div class="bg-slate-800/60 rounded-xl p-3 border border-white/10">
-        <div class="text-xs text-slate-400 uppercase">Utilisateurs</div>
-        <div class="text-2xl font-bold">${s.total_users}</div>
+        <div class="text-xs text-slate-400 uppercase">Utilisateurs</div><div class="text-2xl font-bold">${s.total_users}</div>
       </div>
       <div class="bg-slate-800/60 rounded-xl p-3 border border-white/10">
-        <div class="text-xs text-slate-400 uppercase">Cartes possédées</div>
-        <div class="text-2xl font-bold">${s.total_cards_owned}</div>
+        <div class="text-xs text-slate-400 uppercase">Cartes possédées</div><div class="text-2xl font-bold">${s.total_cards_owned}</div>
       </div>
       <div class="bg-slate-800/60 rounded-xl p-3 border border-white/10">
-        <div class="text-xs text-slate-400 uppercase">Packs ouverts</div>
-        <div class="text-2xl font-bold">${s.total_packs_opened}</div>
+        <div class="text-xs text-slate-400 uppercase">Packs ouverts</div><div class="text-2xl font-bold">${s.total_packs_opened}</div>
       </div>
       <div class="bg-slate-800/60 rounded-xl p-3 border border-white/10">
-        <div class="text-xs text-slate-400 uppercase">Or total</div>
-        <div class="text-2xl font-bold text-amber-400">${s.total_gold}</div>
+        <div class="text-xs text-slate-400 uppercase">Or total</div><div class="text-2xl font-bold text-amber-400">${s.total_gold}</div>
       </div>
     </div>` : ''}
-
     <input id="admin-search" type="text" placeholder="🔍 Rechercher…"
            class="w-full p-2 rounded-lg bg-slate-900 border border-white/10 mb-3 focus:outline-none focus:ring-2 ring-indigo-500">
-
     <div class="bg-slate-800/60 rounded-xl overflow-x-auto border border-white/10">
       <table class="w-full text-sm">
         <thead class="bg-slate-900/60">
@@ -835,21 +972,16 @@ async function renderAdminUsers(content) {
         </tbody>
       </table>
     </div>`;
-
   $('admin-search')?.addEventListener('input', e => {
     const q = e.target.value.toLowerCase();
     document.querySelectorAll('.admin-row').forEach(r => {
       r.style.display = r.dataset.search.includes(q) ? '' : 'none';
     });
   });
-  document.querySelectorAll('.role-select').forEach(s =>
-    s.onchange = () => setRole(s.dataset.user, s.value));
-  document.querySelectorAll('.ban-btn').forEach(b =>
-    b.onclick = () => toggleBan(b.dataset.user, b.dataset.banned === 'true'));
-  document.querySelectorAll('.grant-gold').forEach(b =>
-    b.onclick = () => grantGold(b.dataset.user, b.dataset.username));
-  document.querySelectorAll('.grant-card').forEach(b =>
-    b.onclick = () => grantCard(b.dataset.user, b.dataset.username));
+  document.querySelectorAll('.role-select').forEach(s => s.onchange = () => setRole(s.dataset.user, s.value));
+  document.querySelectorAll('.ban-btn').forEach(b => b.onclick = () => toggleBan(b.dataset.user, b.dataset.banned === 'true'));
+  document.querySelectorAll('.grant-gold').forEach(b => b.onclick = () => grantGold(b.dataset.user, b.dataset.username));
+  document.querySelectorAll('.grant-card').forEach(b => b.onclick = () => grantCard(b.dataset.user, b.dataset.username));
 }
 
 async function renderAdminCards(content) {
@@ -858,7 +990,6 @@ async function renderAdminCards(content) {
     sb.rpc('admin_cards_count'),
     sb.rpc('admin_list_cards', { p_limit: 60, p_offset: 0 })
   ]);
-
   content.innerHTML = `
     <div class="bg-slate-800/60 rounded-xl p-4 mb-4 border border-white/10 flex justify-between items-center flex-wrap gap-3">
       <div>
@@ -866,14 +997,12 @@ async function renderAdminCards(content) {
         <div class="text-3xl font-bold">${total}</div>
       </div>
       <div class="flex gap-2 items-center">
-        <input id="gen-count" type="number" value="100" min="1" max="500"
-               class="w-24 p-2 rounded-lg bg-slate-900 border border-white/10 focus:outline-none">
-        <button id="gen-cards" class="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg font-semibold text-sm">
-          🎲 Générer
-        </button>
+        <input id="gen-count" type="number" value="10" min="1" max="100"
+               class="w-20 p-2 rounded-lg bg-slate-900 border border-white/10 focus:outline-none">
+        <button id="gen-cards" class="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg font-semibold text-sm">🎲 Générer</button>
       </div>
     </div>
-
+    <p class="text-xs text-slate-500 mb-3">⚠️ Génère par petites quantités (10-20) pour économiser le stockage.</p>
     <div class="bg-slate-800/60 rounded-xl p-4 border border-white/10">
       <h3 class="font-bold text-sm mb-2">60 dernières cartes</h3>
       <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 max-h-96 overflow-y-auto">
@@ -885,10 +1014,9 @@ async function renderAdminCards(content) {
           </div>`).join('')}
       </div>
     </div>`;
-
   $('gen-cards').onclick = async () => {
-    const n = parseInt($('gen-count').value) || 100;
-    if (n < 1 || n > 500) return toast('Entre 1 et 500','error');
+    const n = parseInt($('gen-count').value) || 10;
+    if (n < 1 || n > 100) return toast('Entre 1 et 100','error');
     $('gen-cards').disabled = true;
     $('gen-cards').textContent = 'Génération…';
     const { data, error } = await sb.rpc('admin_generate_cards', { p_count: n });
@@ -902,7 +1030,6 @@ async function renderAdminPacks(content) {
   content.innerHTML = '<div class="text-slate-400">Chargement…</div>';
   const { data: packs, error } = await sb.rpc('admin_list_packs');
   if (error) return toast(error.message,'error');
-
   content.innerHTML = `
     <div class="space-y-3">
       ${packs.map(p => `
@@ -938,12 +1065,9 @@ async function renderAdminPacks(content) {
                 </div>`).join('')}
             </div>
           </details>
-          <button data-id="${p.id}" class="save-pack bg-emerald-600 hover:bg-emerald-500 w-full py-1.5 rounded-lg text-sm font-semibold">
-            💾 Enregistrer
-          </button>
+          <button data-id="${p.id}" class="save-pack bg-emerald-600 hover:bg-emerald-500 w-full py-1.5 rounded-lg text-sm font-semibold">💾 Enregistrer</button>
         </div>`).join('')}
     </div>`;
-
   document.querySelectorAll('.save-pack').forEach(b => {
     b.onclick = async () => {
       const id = b.dataset.id;
@@ -955,8 +1079,7 @@ async function renderAdminPacks(content) {
         weights[i.dataset.rarity] = parseFloat(i.value);
       });
       const { error } = await sb.rpc('admin_update_pack', {
-        p_id: id, p_price: price, p_free_per_hour: free,
-        p_weights: weights, p_active: active
+        p_id: id, p_price: price, p_free_per_hour: free, p_weights: weights, p_active: active
       });
       if (error) return toast(error.message,'error');
       toast('Pack mis à jour','success');
@@ -969,7 +1092,6 @@ async function renderAdminLogs(content) {
   content.innerHTML = '<div class="text-slate-400">Chargement…</div>';
   const { data: logs, error } = await sb.rpc('admin_list_logs', { p_filter: null, p_limit: 200 });
   if (error) return toast(error.message,'error');
-
   const actions = [...new Set((logs || []).map(l => l.action))];
   content.innerHTML = `
     <div class="bg-slate-800/60 rounded-xl p-4 border border-white/10">
@@ -980,7 +1102,7 @@ async function renderAdminLogs(content) {
           ${actions.map(a => `<option value="${a}">${a}</option>`).join('')}
         </select>
       </div>
-      <div id="logs-list" class="space-y-1 max-h-[600px] overflow-y-auto text-xs">
+      <div class="space-y-1 max-h-[600px] overflow-y-auto text-xs">
         ${(logs || []).map(l => `
           <div class="log-row flex justify-between gap-2 py-1.5 border-b border-slate-700/30" data-action="${l.action}">
             <span><b class="text-indigo-300">${l.actor}</b> — <span class="text-slate-300">${l.action}</span></span>
@@ -988,7 +1110,6 @@ async function renderAdminLogs(content) {
           </div>`).join('')}
       </div>
     </div>`;
-
   $('log-filter').addEventListener('change', e => {
     const v = e.target.value;
     document.querySelectorAll('.log-row').forEach(r => {
@@ -1020,7 +1141,7 @@ async function grantGold(userId, username) {
   await renderAdmin();
 }
 async function grantCard(userId, username) {
-  const r = prompt(`Rareté de la carte à donner à ${username} ?\n(common / uncommon / rare / epic / legendary)`);
+  const r = prompt(`Rareté pour ${username} ?\n(common / uncommon / rare / epic / legendary)`);
   if (!r) return;
   const { error } = await sb.rpc('admin_grant_card', { p_user_id: userId, p_rarity: r.toLowerCase() });
   if (error) return toast(error.message,'error');
@@ -1058,28 +1179,21 @@ async function enterApp() {
   await renderCollection();
   if (['admin','super_modo','modo'].includes(profile.role)) await renderAdmin();
 }
-function leaveApp() {
-  profile = null;
-  hide('main-app'); show('auth-screen');
-}
+function leaveApp() { profile = null; hide('main-app'); show('auth-screen'); }
 
-// Rafraîchit le compte à rebours des packs toutes les secondes
+// Compte à rebours live
 setInterval(async () => {
   if (!profile || $('view-packs').classList.contains('hidden')) return;
   await loadPackStatuses();
-  const packs = document.querySelectorAll('.pack-tile');
-  if (!packs.length) return;
-  packs.forEach(tile => {
+  document.querySelectorAll('.pack-tile').forEach(tile => {
     const btn = tile.querySelector('.open-pack-btn');
     if (!btn) return;
-    const id = btn.dataset.pack;
-    const st = packStatuses[id];
+    const st = packStatuses[btn.dataset.pack];
     if (!st) return;
     const badge = tile.querySelector('.free-badge, span.bg-slate-700');
-    const hasFree = st.free_remaining > 0;
-    if (hasFree && badge && !badge.classList.contains('free-badge')) {
+    if (st.free_remaining > 0 && badge && !badge.classList.contains('free-badge')) {
       renderPacks();
-    } else if (!hasFree && badge) {
+    } else if (!st.free_remaining && badge) {
       const min = Math.floor(st.seconds_left / 60);
       const sec = st.seconds_left % 60;
       if (badge.textContent.includes('⏳')) {
@@ -1095,14 +1209,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   $('btn-logout').onclick = signOut;
   $('btn-daily').onclick = claimDaily;
   bindNav();
-
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
       if (!$('detail-modal').classList.contains('hidden')) closeDetail();
       else if ($('close-reveal')) $('close-reveal').click();
     }
   });
-
   const { data: { session } } = await sb.auth.getSession();
   if (session) await enterApp();
   sb.auth.onAuthStateChange((_e, s) => { if (s) enterApp(); else leaveApp(); });
