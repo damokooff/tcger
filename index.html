@@ -6,7 +6,65 @@
   <title>TCG Wiki Master</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>body { background: #0f172a; }</style>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+  <style>
+    body { background: #0f172a; }
+
+    /* ---------- Animation d'ouverture ---------- */
+    .card-reveal { perspective: 1600px; width: 280px; height: 400px; }
+    .card-inner {
+      position: relative; width: 100%; height: 100%;
+      transform-style: preserve-3d;
+      transition: transform .9s cubic-bezier(.4,.1,.2,1);
+      transform: rotateY(180deg);
+    }
+    .card-inner.revealed { transform: rotateY(0deg); }
+    .card-face {
+      position: absolute; inset: 0;
+      backface-visibility: hidden; -webkit-backface-visibility: hidden;
+      border-radius: 18px; overflow: hidden;
+    }
+    .card-back {
+      transform: rotateY(180deg);
+      background: repeating-linear-gradient(45deg, #1e293b 0 10px, #334155 10px 20px);
+      display: flex; align-items: center; justify-content: center;
+      border: 3px solid #475569;
+      animation: card-wobble 1.2s ease-in-out infinite;
+    }
+    @keyframes card-wobble {
+      0%, 100% { transform: rotateY(180deg) rotateZ(-3deg); }
+      50%      { transform: rotateY(180deg) rotateZ(3deg); }
+    }
+    .card-front {
+      display: flex; flex-direction: column;
+      background: linear-gradient(180deg, var(--rarity-color) 0%, #0f172a 55%);
+      border: 3px solid var(--rarity-border);
+      box-shadow: 0 0 0 1px rgba(255,255,255,.08) inset,
+                  0 0 60px 8px var(--rarity-glow);
+      animation: glow-pulse 1.6s ease-in-out infinite;
+    }
+    @keyframes glow-pulse {
+      0%, 100% { box-shadow: 0 0 0 1px rgba(255,255,255,.08) inset, 0 0 40px 6px var(--rarity-glow); }
+      50%      { box-shadow: 0 0 0 1px rgba(255,255,255,.08) inset, 0 0 90px 25px var(--rarity-glow); }
+    }
+    .card-front img { flex: 1; object-fit: contain; background: rgba(0,0,0,.25); }
+    .card-front .card-info { padding: 12px; text-align: center; background: linear-gradient(180deg, transparent, #0f172a); }
+    .badge-new {
+      position: absolute; top: -12px; right: -12px;
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      color: #0f172a; font-weight: 800; font-size: 11px;
+      padding: 4px 10px; border-radius: 999px;
+      box-shadow: 0 0 20px rgba(251,191,36,.7);
+      animation: badge-pop .5s cubic-bezier(.2,1.6,.4,1) .9s both;
+    }
+    @keyframes badge-pop { from { transform: scale(0) rotate(-20deg); } to { transform: scale(1) rotate(0); } }
+
+    #btn-daily.ready { animation: daily-pulse 1.5s ease-in-out infinite; }
+    @keyframes daily-pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(16,185,129,.7); }
+      50%      { box-shadow: 0 0 0 6px rgba(16,185,129,0); }
+    }
+  </style>
 </head>
 <body class="min-h-screen text-slate-100 font-sans">
 
@@ -14,9 +72,9 @@
 <div id="auth-screen" class="min-h-screen flex items-center justify-center p-4">
   <div class="bg-slate-800 rounded-xl p-8 w-full max-w-md space-y-4 shadow-2xl">
     <h1 class="text-2xl font-bold text-center">⚔️ TCG Wiki Master</h1>
-    <input id="email"    type="email"    placeholder="Email"                       class="w-full p-2 rounded bg-slate-700 focus:outline-none focus:ring-2 ring-indigo-500">
-    <input id="password" type="password" placeholder="Mot de passe"                class="w-full p-2 rounded bg-slate-700 focus:outline-none focus:ring-2 ring-indigo-500">
-    <input id="username" type="text"     placeholder="Pseudo (inscription)"        class="w-full p-2 rounded bg-slate-700 focus:outline-none focus:ring-2 ring-indigo-500">
+    <input id="email"    type="email"    placeholder="Email"                class="w-full p-2 rounded bg-slate-700 focus:outline-none focus:ring-2 ring-indigo-500">
+    <input id="password" type="password" placeholder="Mot de passe"         class="w-full p-2 rounded bg-slate-700 focus:outline-none focus:ring-2 ring-indigo-500">
+    <input id="username" type="text"     placeholder="Pseudo (inscription)" class="w-full p-2 rounded bg-slate-700 focus:outline-none focus:ring-2 ring-indigo-500">
     <div class="flex gap-2">
       <button id="btn-login"  class="flex-1 bg-indigo-600 hover:bg-indigo-500 p-2 rounded font-semibold">Connexion</button>
       <button id="btn-signup" class="flex-1 bg-emerald-600 hover:bg-emerald-500 p-2 rounded font-semibold">Inscription</button>
@@ -32,7 +90,8 @@
       <span id="user-badge" class="text-sm text-slate-300"></span>
       <span id="role-badge" class="text-xs px-2 py-0.5 rounded font-semibold bg-slate-600"></span>
     </div>
-    <div class="flex items-center gap-4">
+    <div class="flex items-center gap-3">
+      <button id="btn-daily" class="text-sm bg-slate-700 px-3 py-1 rounded font-semibold">🎁</button>
       <span class="text-sm">💰 <span id="gold-display" class="font-bold">0</span> or</span>
       <button id="btn-logout" class="text-sm bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded">Déconnexion</button>
     </div>
@@ -51,11 +110,16 @@
   </main>
 </div>
 
+<!-- ============ MODAL OUVERTURE ============ -->
+<div id="pack-modal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 z-40">
+  <div id="pack-modal-content"></div>
+</div>
+
 <div id="toast" class="fixed bottom-4 right-4 hidden px-4 py-2 rounded shadow-lg z-50"></div>
 
 <script>
 // ============================================================
-// Config
+// ⚙️ CONFIG — remplace ces deux valeurs par celles de ton projet
 // ============================================================
 const SUPABASE_URL      = 'https://ktapitfayxaxslaexvgq.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0YXBpdGZheXhheHNsYWV4dmdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ4MTQ2ODYsImV4cCI6MjExMDM5MDY4Nn0.EumQomIvDrT3U56SMHdy0hRpo2iHeXtxTAh5GxUMrAA';
@@ -73,11 +137,20 @@ const ROLE_COLORS = {
   admin: 'bg-red-600', super_modo: 'bg-orange-500',
   modo: 'bg-blue-500', user: 'bg-slate-600'
 };
-const RARITY_COLORS = {
-  common: 'bg-slate-600', uncommon: 'bg-green-700', rare: 'bg-blue-700',
-  epic: 'bg-purple-700', legendary: 'bg-yellow-600'
+
+const RARITY_STYLE = {
+  common:    { color: '#475569', border: '#94a3b8', glow: 'rgba(148,163,184,.6)' },
+  uncommon:  { color: '#166534', border: '#22c55e', glow: 'rgba(34,197,94,.6)' },
+  rare:      { color: '#1e40af', border: '#3b82f6', glow: 'rgba(59,130,246,.7)' },
+  epic:      { color: '#6b21a8', border: '#a855f7', glow: 'rgba(168,85,247,.8)' },
+  legendary: { color: '#b45309', border: '#fbbf24', glow: 'rgba(251,191,36,.9)' }
 };
 
+const RARITY_SELL = { common: 20, uncommon: 50, rare: 150, epic: 400, legendary: 1000 };
+
+// ============================================================
+// Utilitaires
+// ============================================================
 function toast(msg, type = 'info') {
   const el = $('toast');
   el.textContent = msg;
@@ -89,8 +162,9 @@ function toast(msg, type = 'info') {
   el._t = setTimeout(() => hide('toast'), 3500);
 }
 
-function roleBadge(role) {
-  return `<span class="text-xs px-2 py-0.5 rounded font-semibold ${ROLE_COLORS[role] || 'bg-slate-600'}">${role}</span>`;
+function cardImage(card) {
+  return card.image_url ||
+    `https://api.dicebear.com/9.x/adventurer/svg?seed=${encodeURIComponent(card.name || card.card_name)}`;
 }
 
 // ============================================================
@@ -101,10 +175,7 @@ async function signUp() {
   const password = $('password').value;
   const username = $('username').value.trim();
   if (!email || !password || !username) return toast('Remplis tous les champs', 'error');
-
-  const { error } = await sb.auth.signUp({
-    email, password, options: { data: { username } }
-  });
+  const { error } = await sb.auth.signUp({ email, password, options: { data: { username } } });
   if (error) return toast(error.message, 'error');
   toast('Compte créé ! Vérifie tes emails si confirmation requise.', 'success');
 }
@@ -132,16 +203,44 @@ async function loadProfile() {
 async function refreshProfile() {
   profile = await loadProfile();
   if (!profile) return;
-
   $('user-badge').textContent = profile.username;
   $('gold-display').textContent = profile.gold;
   const rb = $('role-badge');
   rb.textContent = profile.role;
   rb.className = `text-xs px-2 py-0.5 rounded font-semibold ${ROLE_COLORS[profile.role] || 'bg-slate-600'}`;
-
   const adminBtn = document.querySelector('[data-view="admin"]');
   if (['admin', 'super_modo', 'modo'].includes(profile.role)) adminBtn.classList.remove('hidden');
   else adminBtn.classList.add('hidden');
+}
+
+// ============================================================
+// Bonus quotidien
+// ============================================================
+async function refreshDaily() {
+  const { data, error } = await sb.rpc('get_daily_status');
+  if (error || !data?.[0]) return;
+  const btn = $('btn-daily');
+  if (data[0].can_claim) {
+    btn.textContent = '🎁 +300 or';
+    btn.disabled = false;
+    btn.className = 'text-sm bg-emerald-600 hover:bg-emerald-500 px-3 py-1 rounded font-semibold ready';
+  } else {
+    const h = Math.floor(data[0].hours_left);
+    const m = Math.floor((data[0].hours_left - h) * 60);
+    btn.textContent = `🎁 ${h}h${m.toString().padStart(2, '0')}m`;
+    btn.disabled = true;
+    btn.className = 'text-sm bg-slate-700 px-3 py-1 rounded opacity-60 cursor-not-allowed';
+  }
+}
+
+async function claimDaily() {
+  const { data, error } = await sb.rpc('claim_daily_bonus');
+  if (error) return toast(error.message, 'error');
+  toast(`🎁 +${data[0].gold_earned} or !`, 'success');
+  confetti({ particleCount: 60, spread: 70, origin: { y: 0.7 }, colors: ['#10b981','#34d399','#6ee7b7'] });
+  await refreshProfile();
+  await refreshDaily();
+  await renderPacks();
 }
 
 // ============================================================
@@ -160,10 +259,12 @@ async function renderPacks() {
           <p class="text-slate-400 text-sm mb-3">💰 ${p.price} or</p>
           <div class="text-xs text-slate-400 mb-3 flex flex-wrap gap-2">
             ${Object.entries(p.rarity_weights).map(([r, w]) =>
-              `<span class="px-1.5 py-0.5 rounded ${RARITY_COLORS[r]}">${r}: ${w}%</span>`).join('')}
+              `<span class="px-1.5 py-0.5 rounded ${RARITY_STYLE[r]?.color ? '' : 'bg-slate-600'}"
+                     style="background:${RARITY_STYLE[r]?.color || '#475569'}">${r}: ${w}%</span>`
+            ).join('')}
           </div>
           <button class="open-pack-btn w-full bg-indigo-600 hover:bg-indigo-500 p-2 rounded font-semibold disabled:opacity-40 disabled:cursor-not-allowed"
-                  data-pack="${p.id}" ${profile.gold < p.price ? 'disabled' : ''}>
+                  data-pack="${p.id}" data-price="${p.price}" ${profile.gold < p.price ? 'disabled' : ''}>
             Ouvrir (${p.price} or)
           </button>
         </div>
@@ -171,18 +272,73 @@ async function renderPacks() {
     </div>
   `;
   document.querySelectorAll('.open-pack-btn').forEach(btn => {
-    btn.onclick = () => openPack(btn.dataset.pack);
+    btn.onclick = () => openPack(btn.dataset.pack, btn);
   });
 }
 
-async function openPack(packId) {
+async function openPack(packId, btn) {
+  if (btn) { btn.disabled = true; btn.textContent = 'Ouverture…'; }
   const { data, error } = await sb.rpc('open_pack', { p_pack_id: packId });
-  if (error) return toast(error.message, 'error');
-  const r = data[0];
-  toast(`🃏 ${r.card_name} (${r.rarity})${r.is_new ? ' — NOUVELLE !' : ''}`, 'success');
-  await refreshProfile();
-  await renderPacks();
-  await renderCollection();
+  if (error) {
+    if (btn) { btn.disabled = false; btn.textContent = `Ouvrir`; }
+    return toast(error.message, 'error');
+  }
+  showPackReveal(data[0]);
+}
+
+function showPackReveal(card) {
+  const style = RARITY_STYLE[card.rarity] || RARITY_STYLE.common;
+  const img = cardImage(card);
+
+  $('pack-modal-content').innerHTML = `
+    <div class="flex flex-col items-center gap-5">
+      <div class="card-reveal">
+        <div class="card-inner" id="card-inner">
+          <div class="card-face card-back text-5xl">🎴</div>
+          <div class="card-face card-front"
+               style="--rarity-color:${style.color};--rarity-border:${style.border};--rarity-glow:${style.glow}">
+            ${card.is_new ? '<div class="badge-new">✨ NOUVELLE</div>' : ''}
+            <img src="${img}" alt="${card.card_name}">
+            <div class="card-info">
+              <p class="font-bold text-base">${card.card_name}</p>
+              <p class="text-xs uppercase tracking-wide mt-1" style="color:${style.border}">${card.rarity}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="reveal-footer" class="opacity-0 transition-opacity duration-500 text-center space-y-2">
+        ${card.bonus_gold > 0
+          ? `<p class="text-emerald-400 font-bold">+${card.bonus_gold} or bonus !</p>` : ''}
+        <button id="close-reveal" class="bg-indigo-600 hover:bg-indigo-500 px-6 py-2 rounded font-semibold">
+          Continuer
+        </button>
+      </div>
+    </div>
+  `;
+  show('pack-modal');
+
+  setTimeout(() => {
+    $('card-inner').classList.add('revealed');
+    $('reveal-footer').classList.remove('opacity-0');
+    if (['epic', 'legendary'].includes(card.rarity)) {
+      confetti({
+        particleCount: card.rarity === 'legendary' ? 220 : 100,
+        spread: card.rarity === 'legendary' ? 130 : 90,
+        origin: { y: 0.6 },
+        colors: card.rarity === 'legendary'
+          ? ['#fbbf24','#f59e0b','#fde68a','#fff']
+          : ['#a855f7','#c084fc','#e9d5ff']
+      });
+    }
+  }, 1100);
+
+  $('close-reveal').onclick = async () => {
+    hide('pack-modal');
+    await refreshProfile();
+    await renderPacks();
+    await renderCollection();
+    await refreshDaily();
+  };
 }
 
 // ============================================================
@@ -190,31 +346,57 @@ async function openPack(packId) {
 // ============================================================
 async function renderCollection() {
   const { data, error } = await sb.from('collection_items')
-    .select('quantity, first_source, acquired_at, cards(name, rarity, description)')
+    .select('card_id, quantity, first_source, acquired_at, cards(name, rarity, description, image_url)')
     .order('acquired_at', { ascending: false });
   if (error) return toast(error.message, 'error');
 
   if (!data.length) {
-    $('view-collection').innerHTML = '<p class="text-slate-400">Ta collection est vide. Ouvre un pack !</p>';
+    $('view-collection').innerHTML =
+      '<p class="text-slate-400">Ta collection est vide. Ouvre un pack !</p>';
     return;
   }
+
   const total = data.reduce((s, i) => s + i.quantity, 0);
   $('view-collection').innerHTML = `
     <h2 class="text-xl font-bold mb-4">Collection (${total} cartes)</h2>
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-      ${data.map(i => `
-        <div class="bg-slate-800 rounded-lg p-3">
-          <div class="flex justify-between items-start mb-1">
-            <span class="font-semibold text-sm">${i.cards.name}</span>
-            <span class="text-xs bg-slate-700 px-1.5 rounded">x${i.quantity}</span>
-          </div>
-          <span class="text-xs px-2 py-0.5 rounded ${RARITY_COLORS[i.cards.rarity]}">${i.cards.rarity}</span>
-          <p class="text-xs text-slate-400 mt-2 leading-tight">${i.cards.description || ''}</p>
-          <p class="text-[10px] text-slate-500 mt-2">source: ${i.first_source}</p>
-        </div>
-      `).join('')}
+      ${data.map(i => {
+        const st  = RARITY_STYLE[i.cards.rarity] || RARITY_STYLE.common;
+        const img = cardImage(i.cards);
+        const sellPrice = RARITY_SELL[i.cards.rarity] || 10;
+        return `
+          <div class="rounded-xl overflow-hidden border-2"
+               style="border-color:${st.border}; background:linear-gradient(180deg,${st.color},#0f172a)">
+            <img src="${img}" alt="${i.cards.name}" class="w-full h-32 object-contain bg-black/20">
+            <div class="p-2">
+              <div class="flex justify-between items-center mb-1">
+                <span class="font-semibold text-sm truncate">${i.cards.name}</span>
+                <span class="text-xs bg-black/40 px-1.5 rounded">x${i.quantity}</span>
+              </div>
+              <p class="text-xs uppercase tracking-wide" style="color:${st.border}">${i.cards.rarity}</p>
+              ${i.quantity > 1 ? `
+                <button class="sell-btn w-full mt-2 bg-slate-900/60 hover:bg-slate-900 text-xs py-1 rounded"
+                        data-card="${i.card_id}" data-name="${i.cards.name}">
+                  💰 Vendre 1 (+${sellPrice})
+                </button>` : ''}
+            </div>
+          </div>`;
+      }).join('')}
     </div>
   `;
+  document.querySelectorAll('.sell-btn').forEach(b => {
+    b.onclick = () => sellDuplicate(b.dataset.card, b.dataset.name);
+  });
+}
+
+async function sellDuplicate(cardId, name) {
+  if (!confirm(`Vendre 1 "${name}" ?`)) return;
+  const { data, error } = await sb.rpc('sell_duplicate', { p_card_id: cardId, p_quantity: 1 });
+  if (error) return toast(error.message, 'error');
+  toast(`💰 +${data[0].gold_earned} or`, 'success');
+  await refreshProfile();
+  await renderCollection();
+  await renderPacks();
 }
 
 // ============================================================
@@ -231,7 +413,9 @@ async function renderAdmin() {
 
   $('view-admin').innerHTML = `
     <h2 class="text-xl font-bold mb-4">Panneau d'administration</h2>
-    <p class="text-slate-400 text-sm mb-3">Ton rôle : ${roleBadge(profile.role)}</p>
+    <p class="text-slate-400 text-sm mb-3">Ton rôle :
+      <span class="text-xs px-2 py-0.5 rounded font-semibold ${ROLE_COLORS[profile.role]}">${profile.role}</span>
+    </p>
     <div class="bg-slate-800 rounded-xl overflow-x-auto">
       <table class="w-full text-sm">
         <thead class="bg-slate-900">
@@ -247,7 +431,9 @@ async function renderAdmin() {
           ${data.map(u => `
             <tr class="border-t border-slate-700">
               <td class="p-2">${u.username}</td>
-              <td class="p-2">${roleBadge(u.role)}</td>
+              <td class="p-2">
+                <span class="text-xs px-2 py-0.5 rounded font-semibold ${ROLE_COLORS[u.role]}">${u.role}</span>
+              </td>
               <td class="p-2">${u.gold}</td>
               <td class="p-2">${u.banned
                 ? '<span class="text-red-400">Banni</span>'
@@ -318,7 +504,9 @@ function bindNav() {
 async function enterApp() {
   await refreshProfile();
   if (!profile) return;
-  show('main-app'); hide('auth-screen');
+  show('main-app');
+  hide('auth-screen');
+  await refreshDaily();
   await renderPacks();
   await renderCollection();
   if (['admin', 'super_modo', 'modo'].includes(profile.role)) await renderAdmin();
@@ -326,13 +514,15 @@ async function enterApp() {
 
 function leaveApp() {
   profile = null;
-  hide('main-app'); show('auth-screen');
+  hide('main-app');
+  show('auth-screen');
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
   $('btn-login').onclick  = signIn;
   $('btn-signup').onclick = signUp;
   $('btn-logout').onclick = signOut;
+  $('btn-daily').onclick  = claimDaily;
   bindNav();
 
   const { data: { session } } = await sb.auth.getSession();
