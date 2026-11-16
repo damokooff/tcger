@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TCG Wiki Master</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>body { background: #0f172a; }</style>
+</head>
+<body class="min-h-screen text-slate-100 font-sans">
+
+<!-- ============ AUTH ============ -->
+<div id="auth-screen" class="min-h-screen flex items-center justify-center p-4">
+  <div class="bg-slate-800 rounded-xl p-8 w-full max-w-md space-y-4 shadow-2xl">
+    <h1 class="text-2xl font-bold text-center">⚔️ TCG Wiki Master</h1>
+    <input id="email"    type="email"    placeholder="Email"                       class="w-full p-2 rounded bg-slate-700 focus:outline-none focus:ring-2 ring-indigo-500">
+    <input id="password" type="password" placeholder="Mot de passe"                class="w-full p-2 rounded bg-slate-700 focus:outline-none focus:ring-2 ring-indigo-500">
+    <input id="username" type="text"     placeholder="Pseudo (inscription)"        class="w-full p-2 rounded bg-slate-700 focus:outline-none focus:ring-2 ring-indigo-500">
+    <div class="flex gap-2">
+      <button id="btn-login"  class="flex-1 bg-indigo-600 hover:bg-indigo-500 p-2 rounded font-semibold">Connexion</button>
+      <button id="btn-signup" class="flex-1 bg-emerald-600 hover:bg-emerald-500 p-2 rounded font-semibold">Inscription</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="main-app" class="hidden">
+  <header class="bg-slate-800 px-6 py-3 flex justify-between items-center flex-wrap gap-2">
+    <div class="flex items-center gap-3">
+      <h1 class="font-bold text-lg">⚔️ TCG Wiki Master</h1>
+      <span id="user-badge" class="text-sm text-slate-300"></span>
+      <span id="role-badge" class="text-xs px-2 py-0.5 rounded font-semibold bg-slate-600"></span>
+    </div>
+    <div class="flex items-center gap-4">
+      <span class="text-sm">💰 <span id="gold-display" class="font-bold">0</span> or</span>
+      <button id="btn-logout" class="text-sm bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded">Déconnexion</button>
+    </div>
+  </header>
+
+  <nav class="bg-slate-900 px-6 py-2 flex gap-2">
+    <button data-view="packs"      class="nav-btn bg-slate-700 px-3 py-1 rounded text-sm">🃏 Packs</button>
+    <button data-view="collection" class="nav-btn px-3 py-1 rounded text-sm hover:bg-slate-700">📚 Collection</button>
+    <button data-view="admin"      class="nav-btn px-3 py-1 rounded text-sm hover:bg-slate-700 hidden">🛡️ Admin</button>
+  </nav>
+
+  <main class="p-6 max-w-5xl mx-auto">
+    <div id="view-packs"      class="view"></div>
+    <div id="view-collection" class="view hidden"></div>
+    <div id="view-admin"      class="view hidden"></div>
+  </main>
+</div>
+
+<div id="toast" class="fixed bottom-4 right-4 hidden px-4 py-2 rounded shadow-lg z-50"></div>
+
+<script>
+// ============================================================
+// Config
+// ============================================================
+const SUPABASE_URL      = 'https://ktapitfayxaxslaexvgq.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0YXBpdGZheXhheHNsYWV4dmdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ4MTQ2ODYsImV4cCI6MjExMDM5MDY4Nn0.EumQomIvDrT3U56SMHdy0hRpo2iHeXtxTAh5GxUMrAA';
+
+const { createClient } = window.supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let profile = null;
+
+const $ = (id) => document.getElementById(id);
+const show = (id) => $(id).classList.remove('hidden');
+const hide = (id) => $(id).classList.add('hidden');
+
+const ROLE_COLORS = {
+  admin: 'bg-red-600', super_modo: 'bg-orange-500',
+  modo: 'bg-blue-500', user: 'bg-slate-600'
+};
+const RARITY_COLORS = {
+  common: 'bg-slate-600', uncommon: 'bg-green-700', rare: 'bg-blue-700',
+  epic: 'bg-purple-700', legendary: 'bg-yellow-600'
+};
+
+function toast(msg, type = 'info') {
+  const el = $('toast');
+  el.textContent = msg;
+  el.className = `fixed bottom-4 right-4 px-4 py-2 rounded shadow-lg z-50 ${
+    type === 'error' ? 'bg-red-600' : type === 'success' ? 'bg-emerald-600' : 'bg-slate-700'
+  }`;
+  show('toast');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => hide('toast'), 3500);
+}
+
+function roleBadge(role) {
+  return `<span class="text-xs px-2 py-0.5 rounded font-semibold ${ROLE_COLORS[role] || 'bg-slate-600'}">${role}</span>`;
+}
+
+// ============================================================
+// Auth
+// ============================================================
+async function signUp() {
+  const email = $('email').value.trim();
+  const password = $('password').value;
+  const username = $('username').value.trim();
+  if (!email || !password || !username) return toast('Remplis tous les champs', 'error');
+
+  const { error } = await sb.auth.signUp({
+    email, password, options: { data: { username } }
+  });
+  if (error) return toast(error.message, 'error');
+  toast('Compte créé ! Vérifie tes emails si confirmation requise.', 'success');
+}
+
+async function signIn() {
+  const email = $('email').value.trim();
+  const password = $('password').value;
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  if (error) return toast(error.message, 'error');
+}
+
+async function signOut() { await sb.auth.signOut(); }
+
+// ============================================================
+// Profil
+// ============================================================
+async function loadProfile() {
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return null;
+  const { data, error } = await sb.from('profiles').select('*').eq('id', user.id).single();
+  if (error) { console.error(error); return null; }
+  return data;
+}
+
+async function refreshProfile() {
+  profile = await loadProfile();
+  if (!profile) return;
+
+  $('user-badge').textContent = profile.username;
+  $('gold-display').textContent = profile.gold;
+  const rb = $('role-badge');
+  rb.textContent = profile.role;
+  rb.className = `text-xs px-2 py-0.5 rounded font-semibold ${ROLE_COLORS[profile.role] || 'bg-slate-600'}`;
+
+  const adminBtn = document.querySelector('[data-view="admin"]');
+  if (['admin', 'super_modo', 'modo'].includes(profile.role)) adminBtn.classList.remove('hidden');
+  else adminBtn.classList.add('hidden');
+}
+
+// ============================================================
+// Packs
+// ============================================================
+async function renderPacks() {
+  const { data, error } = await sb.from('packs').select('*').eq('is_active', true).order('price');
+  if (error) return toast(error.message, 'error');
+
+  $('view-packs').innerHTML = `
+    <h2 class="text-xl font-bold mb-4">Packs disponibles</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      ${data.map(p => `
+        <div class="bg-slate-800 rounded-xl p-5">
+          <h3 class="font-bold text-lg">${p.name}</h3>
+          <p class="text-slate-400 text-sm mb-3">💰 ${p.price} or</p>
+          <div class="text-xs text-slate-400 mb-3 flex flex-wrap gap-2">
+            ${Object.entries(p.rarity_weights).map(([r, w]) =>
+              `<span class="px-1.5 py-0.5 rounded ${RARITY_COLORS[r]}">${r}: ${w}%</span>`).join('')}
+          </div>
+          <button class="open-pack-btn w-full bg-indigo-600 hover:bg-indigo-500 p-2 rounded font-semibold disabled:opacity-40 disabled:cursor-not-allowed"
+                  data-pack="${p.id}" ${profile.gold < p.price ? 'disabled' : ''}>
+            Ouvrir (${p.price} or)
+          </button>
+        </div>
+      `).join('')}
+    </div>
+  `;
+  document.querySelectorAll('.open-pack-btn').forEach(btn => {
+    btn.onclick = () => openPack(btn.dataset.pack);
+  });
+}
+
+async function openPack(packId) {
+  const { data, error } = await sb.rpc('open_pack', { p_pack_id: packId });
+  if (error) return toast(error.message, 'error');
+  const r = data[0];
+  toast(`🃏 ${r.card_name} (${r.rarity})${r.is_new ? ' — NOUVELLE !' : ''}`, 'success');
+  await refreshProfile();
+  await renderPacks();
+  await renderCollection();
+}
+
+// ============================================================
+// Collection
+// ============================================================
+async function renderCollection() {
+  const { data, error } = await sb.from('collection_items')
+    .select('quantity, first_source, acquired_at, cards(name, rarity, description)')
+    .order('acquired_at', { ascending: false });
+  if (error) return toast(error.message, 'error');
+
+  if (!data.length) {
+    $('view-collection').innerHTML = '<p class="text-slate-400">Ta collection est vide. Ouvre un pack !</p>';
+    return;
+  }
+  const total = data.reduce((s, i) => s + i.quantity, 0);
+  $('view-collection').innerHTML = `
+    <h2 class="text-xl font-bold mb-4">Collection (${total} cartes)</h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+      ${data.map(i => `
+        <div class="bg-slate-800 rounded-lg p-3">
+          <div class="flex justify-between items-start mb-1">
+            <span class="font-semibold text-sm">${i.cards.name}</span>
+            <span class="text-xs bg-slate-700 px-1.5 rounded">x${i.quantity}</span>
+          </div>
+          <span class="text-xs px-2 py-0.5 rounded ${RARITY_COLORS[i.cards.rarity]}">${i.cards.rarity}</span>
+          <p class="text-xs text-slate-400 mt-2 leading-tight">${i.cards.description || ''}</p>
+          <p class="text-[10px] text-slate-500 mt-2">source: ${i.first_source}</p>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+// ============================================================
+// Admin
+// ============================================================
+async function renderAdmin() {
+  const { data, error } = await sb.from('profiles')
+    .select('id, username, role, gold, banned, created_at')
+    .order('created_at', { ascending: false });
+  if (error) return toast(error.message, 'error');
+
+  const isAdmin = profile.role === 'admin';
+  const canBan  = ['admin', 'super_modo'].includes(profile.role);
+
+  $('view-admin').innerHTML = `
+    <h2 class="text-xl font-bold mb-4">Panneau d'administration</h2>
+    <p class="text-slate-400 text-sm mb-3">Ton rôle : ${roleBadge(profile.role)}</p>
+    <div class="bg-slate-800 rounded-xl overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-900">
+          <tr>
+            <th class="p-2 text-left">Utilisateur</th>
+            <th class="p-2 text-left">Rôle</th>
+            <th class="p-2 text-left">Or</th>
+            <th class="p-2 text-left">Statut</th>
+            <th class="p-2 text-left">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${data.map(u => `
+            <tr class="border-t border-slate-700">
+              <td class="p-2">${u.username}</td>
+              <td class="p-2">${roleBadge(u.role)}</td>
+              <td class="p-2">${u.gold}</td>
+              <td class="p-2">${u.banned
+                ? '<span class="text-red-400">Banni</span>'
+                : '<span class="text-emerald-400">Actif</span>'}</td>
+              <td class="p-2 flex gap-1 flex-wrap">
+                ${isAdmin && u.id !== profile.id ? `
+                  <select data-user="${u.id}" class="role-select bg-slate-700 rounded p-1 text-xs">
+                    <option value="">-- rôle --</option>
+                    <option value="user">user</option>
+                    <option value="modo">modo</option>
+                    <option value="super_modo">super_modo</option>
+                    <option value="admin">admin</option>
+                  </select>` : ''}
+                ${canBan && u.id !== profile.id ? `
+                  <button class="ban-btn bg-slate-700 hover:bg-slate-600 px-2 py-1 rounded text-xs"
+                          data-user="${u.id}" data-banned="${u.banned}">
+                    ${u.banned ? 'Débannir' : 'Bannir'}
+                  </button>` : ''}
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  document.querySelectorAll('.role-select').forEach(sel => {
+    sel.onchange = () => setRole(sel.dataset.user, sel.value);
+  });
+  document.querySelectorAll('.ban-btn').forEach(btn => {
+    btn.onclick = () => toggleBan(btn.dataset.user, btn.dataset.banned === 'true');
+  });
+}
+
+async function setRole(userId, role) {
+  if (!role) return;
+  if (!confirm(`Changer le rôle de cet utilisateur en "${role}" ?`)) return;
+  const { error } = await sb.rpc('set_user_role', { p_user_id: userId, p_role: role });
+  if (error) return toast(error.message, 'error');
+  toast('Rôle mis à jour', 'success');
+  await renderAdmin();
+}
+
+async function toggleBan(userId, currentlyBanned) {
+  const { error } = await sb.rpc('set_user_banned', { p_user_id: userId, p_banned: !currentlyBanned });
+  if (error) return toast(error.message, 'error');
+  toast(currentlyBanned ? 'Utilisateur débanni' : 'Utilisateur banni', 'success');
+  await renderAdmin();
+}
+
+// ============================================================
+// Navigation & bootstrap
+// ============================================================
+function bindNav() {
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.onclick = () => {
+      document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('bg-slate-700'));
+      $(`view-${btn.dataset.view}`).classList.remove('hidden');
+      btn.classList.add('bg-slate-700');
+      if (btn.dataset.view === 'packs')      renderPacks();
+      if (btn.dataset.view === 'collection') renderCollection();
+      if (btn.dataset.view === 'admin')      renderAdmin();
+    };
+  });
+}
+
+async function enterApp() {
+  await refreshProfile();
+  if (!profile) return;
+  show('main-app'); hide('auth-screen');
+  await renderPacks();
+  await renderCollection();
+  if (['admin', 'super_modo', 'modo'].includes(profile.role)) await renderAdmin();
+}
+
+function leaveApp() {
+  profile = null;
+  hide('main-app'); show('auth-screen');
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  $('btn-login').onclick  = signIn;
+  $('btn-signup').onclick = signUp;
+  $('btn-logout').onclick = signOut;
+  bindNav();
+
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) await enterApp();
+
+  sb.auth.onAuthStateChange((_event, session) => {
+    if (session) enterApp(); else leaveApp();
+  });
+});
+</script>
+</body>
+</html>
