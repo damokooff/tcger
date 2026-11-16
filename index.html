@@ -15,11 +15,10 @@
     .view { animation: fadeUp .35s ease-out; }
     @keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
 
-    /* ---- Modals ---- */
     #pack-modal, #detail-modal { transition: opacity .25s ease; }
     #pack-modal.closing, #detail-modal.closing { opacity: 0; }
 
-    /* ---- Pack box ---- */
+    /* ---- Pack burst ---- */
     .pack-box { filter: drop-shadow(0 0 30px rgba(139,92,246,.6));
                 animation: packIdle 1.2s ease-in-out infinite; }
     @keyframes packIdle { 0%,100%{transform:scale(1) rotate(-3deg)} 50%{transform:scale(1.08) rotate(3deg)} }
@@ -55,62 +54,60 @@
       cursor: pointer;
       user-select: none;
       will-change: transform;
+      container-type: inline-size;   /* <- clé pour cqw */
     }
-    .tcg-card .tcg-bg {
-      position: absolute; inset: 0;
-      background: var(--bg);
-      background-size: 200% 200%;
-    }
+    .tcg-card .tcg-bg { position: absolute; inset: 0; }
     .tcg-card .tcg-shine {
       position: absolute; inset: 0; pointer-events: none;
       background: radial-gradient(circle at var(--mx,50%) var(--my,50%),
-                                  rgba(255,255,255,.35) 0%,
-                                  transparent 45%);
+                                  rgba(255,255,255,.35) 0%, transparent 45%);
       opacity: 0; transition: opacity .3s;
     }
     .tcg-card:hover .tcg-shine { opacity: 1; }
     .tcg-card .tcg-emoji {
       position: absolute; inset: 0;
       display: flex; align-items: center; justify-content: center;
-      font-size: 55%;  /* sera surchargé */
+      font-size: 55cqw;               /* <- 55% de la largeur de la carte */
+      line-height: 1;
       filter: drop-shadow(0 10px 20px rgba(0,0,0,.6));
       transform: translateZ(20px);
       transition: transform .3s;
+      padding-bottom: 20%;
     }
     .tcg-card:hover .tcg-emoji { transform: translateZ(35px) scale(1.05); }
     .tcg-card .tcg-vignette {
       position: absolute; inset: 0;
       background:
-        radial-gradient(ellipse at 50% 30%, transparent 30%, rgba(0,0,0,.5) 100%),
-        linear-gradient(180deg, transparent 60%, rgba(0,0,0,.85) 100%);
+        radial-gradient(ellipse at 50% 30%, transparent 30%, rgba(0,0,0,.4) 100%),
+        linear-gradient(180deg, transparent 60%, rgba(0,0,0,.9) 100%);
       pointer-events: none;
     }
     .tcg-card .tcg-footer {
       position: absolute; bottom: 0; left: 0; right: 0;
-      padding: 10px 12px;
+      padding: 10px 10px 12px;
       background: linear-gradient(180deg, transparent, rgba(0,0,0,.95));
       text-align: center;
     }
     .tcg-card .tcg-name {
-      font-weight: 800; font-size: .78rem;
+      font-weight: 800; font-size: 3.8cqw; min-font-size: 10px;
       text-shadow: 0 2px 6px rgba(0,0,0,.9);
       line-height: 1.1;
     }
     .tcg-card .tcg-rarity {
-      font-size: .58rem; letter-spacing: .12em; text-transform: uppercase;
-      margin-top: 2px; font-weight: 700;
+      font-size: 2.8cqw; letter-spacing: .12em; text-transform: uppercase;
+      margin-top: 3px; font-weight: 700;
     }
     .tcg-card .tcg-qty {
       position: absolute; top: 8px; right: 8px;
       background: rgba(0,0,0,.75); backdrop-filter: blur(4px);
       padding: 2px 8px; border-radius: 999px;
-      font-size: .68rem; font-weight: 700;
+      font-size: 3cqw; font-weight: 700;
       border: 1px solid rgba(255,255,255,.15);
     }
     .tcg-card .tcg-new {
       position: absolute; top: -6px; left: 50%; transform: translateX(-50%);
       background: linear-gradient(135deg,#fbbf24,#f59e0b);
-      color: #0f172a; font-weight: 900; font-size: .62rem;
+      color: #0f172a; font-weight: 900; font-size: 2.8cqw;
       padding: 3px 10px; border-radius: 999px;
       box-shadow: 0 0 20px rgba(251,191,36,.7);
       z-index: 5;
@@ -118,24 +115,22 @@
     }
     @keyframes badgePop { from{transform:translateX(-50%) scale(0) rotate(-20deg)} to{transform:translateX(-50%) scale(1) rotate(0)} }
 
-    /* Rareté : bordure + glow */
+    /* ---- Raretés : bordure + glow ---- */
     .tcg-card.rarity-common     { box-shadow: 0 0 0 2px #94a3b8, 0 8px 30px -10px rgba(148,163,184,.5); }
     .tcg-card.rarity-uncommon   { box-shadow: 0 0 0 2px #22c55e, 0 8px 30px -8px rgba(34,197,94,.6); }
     .tcg-card.rarity-rare       { box-shadow: 0 0 0 2px #3b82f6, 0 8px 40px -8px rgba(59,130,246,.7); }
     .tcg-card.rarity-epic       { box-shadow: 0 0 0 2px #a855f7, 0 8px 50px -8px rgba(168,85,247,.8); }
     .tcg-card.rarity-legendary  { box-shadow: 0 0 0 2px #fbbf24, 0 0 60px -5px rgba(251,191,36,.9),
                                              0 8px 40px -6px rgba(251,191,36,.7); }
-    .tcg-card.rarity-legendary .tcg-bg { animation: holoShift 4s linear infinite; }
+    .tcg-card.rarity-legendary .tcg-bg { animation: holoShift 4s linear infinite; background-size: 200% 200%; }
     @keyframes holoShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
 
-    /* ---- Cartes dans la modale de reveal ---- */
     .reveal-card { animation: cardDeal .5s cubic-bezier(.2,.9,.3,1.2) both; }
     @keyframes cardDeal {
       from { opacity: 0; transform: scale(.3) rotate(-15deg); }
       to   { opacity: 1; transform: scale(1) rotate(0); }
     }
 
-    /* ---- Screen shake ---- */
     body.shake { animation: screenShake .3s ease-out; }
     @keyframes screenShake {
       0%,100%{transform:translate(0,0)} 20%{transform:translate(-4px,3px)}
@@ -143,36 +138,43 @@
       80%{transform:translate(3px,2px)}
     }
 
-    /* ---- Daily pulse ---- */
     #btn-daily.ready { animation: dailyPulse 1.5s ease-in-out infinite; }
     @keyframes dailyPulse {
       0%,100%{box-shadow:0 0 0 0 rgba(16,185,129,.7)}
       50%{box-shadow:0 0 0 8px rgba(16,185,129,0)}
     }
 
-    /* ---- Pack tile ---- */
     .pack-tile { transition: all .25s cubic-bezier(.4,0,.2,1); }
     .pack-tile:hover { transform: translateY(-4px);
                        box-shadow: 0 20px 40px -10px rgba(139,92,246,.5); }
 
-    /* ---- Toast ---- */
     #toast { animation: toastIn .25s ease-out; }
     @keyframes toastIn { from{transform:translateY(20px);opacity:0} to{transform:translateY(0);opacity:1} }
+
+    .admin-tab { transition: all .15s; }
+    .admin-tab.active { background: #4f46e5; }
+    .admin-tab:not(.active):hover { background: rgba(255,255,255,.05); }
+
+    .free-badge { animation: freeGlow 2s ease-in-out infinite; }
+    @keyframes freeGlow {
+      0%,100% { box-shadow: 0 0 0 0 rgba(16,185,129,.5); }
+      50%     { box-shadow: 0 0 0 4px rgba(16,185,129,0); }
+    }
   </style>
 </head>
 <body class="min-h-screen text-slate-100 font-sans">
 
-<!-- ============ AUTH ============ -->
+<!-- AUTH -->
 <div id="auth-screen" class="min-h-screen flex items-center justify-center p-4">
   <div class="bg-slate-800/70 backdrop-blur-xl rounded-2xl p-8 w-full max-w-md space-y-4 shadow-2xl border border-white/10">
     <h1 class="text-2xl font-bold text-center">⚔️ TCG Wiki Master</h1>
-    <p class="text-slate-400 text-sm text-center -mt-2">1000 or offerts à l'inscription 🎉</p>
+    <p class="text-slate-400 text-sm text-center -mt-2">1000 or + 10 packs gratuits/heure 🎉</p>
     <input id="email"    type="email"    placeholder="Email"
-           class="w-full p-3 rounded-lg bg-slate-700/60 border border-white/10 focus:outline-none focus:ring-2 ring-indigo-500 transition">
+           class="w-full p-3 rounded-lg bg-slate-700/60 border border-white/10 focus:outline-none focus:ring-2 ring-indigo-500">
     <input id="password" type="password" placeholder="Mot de passe"
-           class="w-full p-3 rounded-lg bg-slate-700/60 border border-white/10 focus:outline-none focus:ring-2 ring-indigo-500 transition">
+           class="w-full p-3 rounded-lg bg-slate-700/60 border border-white/10 focus:outline-none focus:ring-2 ring-indigo-500">
     <input id="username" type="text"     placeholder="Pseudo (inscription)"
-           class="w-full p-3 rounded-lg bg-slate-700/60 border border-white/10 focus:outline-none focus:ring-2 ring-indigo-500 transition">
+           class="w-full p-3 rounded-lg bg-slate-700/60 border border-white/10 focus:outline-none focus:ring-2 ring-indigo-500">
     <div class="flex gap-2">
       <button id="btn-login"  class="flex-1 bg-indigo-600 hover:bg-indigo-500 p-3 rounded-lg font-semibold hover:scale-[1.02] active:scale-[0.98]">Connexion</button>
       <button id="btn-signup" class="flex-1 bg-emerald-600 hover:bg-emerald-500 p-3 rounded-lg font-semibold hover:scale-[1.02] active:scale-[0.98]">Inscription</button>
@@ -180,7 +182,7 @@
   </div>
 </div>
 
-<!-- ============ APP ============ -->
+<!-- APP -->
 <div id="main-app" class="hidden">
   <header class="bg-slate-900/70 backdrop-blur-xl px-6 py-3 flex justify-between items-center flex-wrap gap-2 sticky top-0 z-20 border-b border-white/5">
     <div class="flex items-center gap-3">
@@ -210,12 +212,12 @@
   </main>
 </div>
 
-<!-- ============ MODAL PACK ============ -->
+<!-- MODAL PACK -->
 <div id="pack-modal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 z-40 overflow-auto">
   <div id="pack-modal-content" class="max-w-6xl w-full"></div>
 </div>
 
-<!-- ============ MODAL DÉTAIL CARTE ============ -->
+<!-- MODAL DETAIL -->
 <div id="detail-modal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-40"
      onclick="if(event.target===this)closeDetail()">
   <div id="detail-modal-content"></div>
@@ -232,7 +234,8 @@ const { createClient } = window.supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let profile = null;
-let currentFriendView = null;
+let adminTab = 'users';
+let packStatuses = {};
 
 const $ = id => document.getElementById(id);
 const show = id => $(id).classList.remove('hidden');
@@ -240,17 +243,16 @@ const hide = id => $(id).classList.add('hidden');
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 const ROLE_COLORS = { admin:'bg-red-600', super_modo:'bg-orange-500', modo:'bg-blue-500', user:'bg-slate-600' };
+
 const RARITY_STYLE = {
-  common:    { accent:'#94a3b8', name:'Commune' },
-  uncommon:  { accent:'#22c55e', name:'Peu commune' },
-  rare:      { accent:'#3b82f6', name:'Rare' },
-  epic:      { accent:'#a855f7', name:'Épique' },
-  legendary: { accent:'#fbbf24', name:'Légendaire' }
+  common:    { accent:'#94a3b8', name:'Commune',     bg:['#64748b','#334155'], glow:'rgba(148,163,184,.6)' },
+  uncommon:  { accent:'#22c55e', name:'Peu commune', bg:['#22c55e','#14532d'], glow:'rgba(34,197,94,.6)' },
+  rare:      { accent:'#3b82f6', name:'Rare',        bg:['#3b82f6','#1e3a8a'], glow:'rgba(59,130,246,.7)' },
+  epic:      { accent:'#a855f7', name:'Épique',      bg:['#a855f7','#581c87'], glow:'rgba(168,85,247,.8)' },
+  legendary: { accent:'#fbbf24', name:'Légendaire',  bg:['#fbbf24','#7c2d12'], glow:'rgba(251,191,36,.9)' }
 };
 const SELL_PRICE = { common: 30, uncommon: 75, rare: 200, epic: 600, legendary: 2000 };
 
-// ============================================================
-// Helpers
 // ============================================================
 function toast(msg, type='info') {
   const el = $('toast');
@@ -262,28 +264,20 @@ function toast(msg, type='info') {
   el._t = setTimeout(()=>hide('toast'), 3500);
 }
 
-function hashSeed(str) {
-  let h = 0;
-  for (let i=0;i<str.length;i++) h = (h*31 + str.charCodeAt(i)) | 0;
-  return Math.abs(h);
-}
-
-// Génère le background procédural d'une carte à partir de son art_seed
+// Couleur du fond = rareté (avec légère variation par seed)
 function cardBg(card) {
-  const seed = card.art_seed || hashSeed(card.card_name || card.name || '');
-  const c1 = card.accent_color || '#8b5cf6';
-  const c2 = ['#ec4899','#06b6d4','#f59e0b','#10b981','#ef4444','#6366f1'][seed % 6];
-  const ang1 = (seed % 360);
-  const pos1x = 20 + (seed % 60);
-  const pos1y = 15 + ((seed>>3) % 50);
-  const pos2x = 40 + ((seed>>6) % 50);
-  const pos2y = 50 + ((seed>>9) % 40);
-  return `radial-gradient(circle at ${pos1x}% ${pos1y}%, ${c1}cc 0%, transparent 55%),
-          radial-gradient(circle at ${pos2x}% ${pos2y}%, ${c2}cc 0%, transparent 55%),
-          linear-gradient(${ang1}deg, #0a0a0f 0%, #1e1b4b 50%, #0a0a0f 100%)`;
+  const r = card.rarity || 'common';
+  const pal = (RARITY_STYLE[r] || RARITY_STYLE.common).bg;
+  const seed = card.art_seed || 0;
+  const x1 = 20 + (seed % 60);
+  const y1 = 15 + ((seed>>3) % 50);
+  const x2 = 40 + ((seed>>6) % 50);
+  const y2 = 50 + ((seed>>9) % 40);
+  return `radial-gradient(circle at ${x1}% ${y1}%, ${pal[0]}dd 0%, transparent 55%),
+          radial-gradient(circle at ${x2}% ${y2}%, ${pal[1]}ee 0%, transparent 55%),
+          linear-gradient(145deg, ${pal[1]} 0%, #0a0a0f 100%)`;
 }
 
-// Crée le HTML d'une carte full-art
 function cardHTML(card, opts = {}) {
   const rarity = card.rarity;
   const st = RARITY_STYLE[rarity] || RARITY_STYLE.common;
@@ -291,15 +285,12 @@ function cardHTML(card, opts = {}) {
   const emoji = card.emoji || '❔';
   const qty = opts.qty;
   const isNew = opts.isNew;
-  const size = opts.size || 'md';
-  const fs = size === 'lg' ? '55%' : size === 'md' ? '48%' : '44%';
 
   return `
-    <div class="tcg-card rarity-${rarity}" data-name="${name}" data-rarity="${rarity}"
-         style="--bg:${cardBg(card)}">
-      <div class="tcg-bg"></div>
+    <div class="tcg-card rarity-${rarity}" data-name="${name}" data-rarity="${rarity}">
+      <div class="tcg-bg" style="background:${cardBg(card)}"></div>
       <div class="tcg-shine"></div>
-      <div class="tcg-emoji" style="font-size:${fs}">${emoji}</div>
+      <div class="tcg-emoji">${emoji}</div>
       <div class="tcg-vignette"></div>
       ${qty ? `<div class="tcg-qty">×${qty}</div>` : ''}
       ${isNew ? '<div class="tcg-new">✨ NOUVELLE</div>' : ''}
@@ -311,7 +302,6 @@ function cardHTML(card, opts = {}) {
   `;
 }
 
-// Attache l'effet de tilt 3D + shine à une carte
 function attachTilt(el) {
   const inner = el.querySelector('.tcg-emoji');
   el.addEventListener('mousemove', (e) => {
@@ -331,13 +321,12 @@ function attachTilt(el) {
   });
 }
 
-// Applique le tilt à toutes les .tcg-card du conteneur
 function tiltAll(root) {
   root.querySelectorAll('.tcg-card').forEach(attachTilt);
 }
 
 // ============================================================
-// Auth
+// AUTH
 // ============================================================
 async function signUp() {
   const email = $('email').value.trim();
@@ -356,7 +345,7 @@ async function signIn() {
 async function signOut() { await sb.auth.signOut(); }
 
 // ============================================================
-// Profil
+// PROFIL
 // ============================================================
 async function loadProfile() {
   const { data: { user } } = await sb.auth.getUser();
@@ -379,7 +368,7 @@ async function refreshProfile() {
 }
 
 // ============================================================
-// Daily
+// DAILY
 // ============================================================
 async function refreshDaily() {
   const { data } = await sb.rpc('get_daily_status');
@@ -404,38 +393,74 @@ async function claimDaily() {
 }
 
 // ============================================================
-// Packs
+// PACKS
 // ============================================================
+async function loadPackStatuses() {
+  const { data } = await sb.rpc('get_pack_status');
+  packStatuses = {};
+  (data || []).forEach(s => packStatuses[s.pack_id] = s);
+}
+
 async function renderPacks() {
   const c = $('view-packs');
   c.innerHTML = '<div class="text-slate-400">Chargement…</div>';
-  const { data, error } = await sb.from('packs').select('*').eq('is_active', true).order('price');
+
+  const [{ data: packs, error }, _] = await Promise.all([
+    sb.from('packs').select('*').eq('is_active', true).order('price'),
+    loadPackStatuses()
+  ]);
   if (error) return toast(error.message,'error');
+
   c.innerHTML = `
-    <h2 class="text-xl font-bold mb-4">Packs disponibles</h2>
-    <p class="text-slate-400 text-sm mb-4">Chaque pack contient <b class="text-indigo-400">5 cartes</b>.</p>
+    <h2 class="text-xl font-bold mb-2">Packs disponibles</h2>
+    <p class="text-slate-400 text-sm mb-4">
+      Chaque pack contient <b class="text-indigo-400">5 cartes</b>. Les packs gratuits se rechargent toutes les heures.
+    </p>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      ${data.map(p => `
-        <div class="pack-tile bg-slate-800/60 backdrop-blur border-2 border-slate-700 rounded-2xl p-5">
-          <div class="text-center text-6xl mb-2">🎴</div>
-          <h3 class="font-bold text-lg text-center">${p.name}</h3>
-          <p class="text-slate-400 text-sm text-center mb-3">💰 ${p.price} or</p>
-          <div class="text-xs mb-3 flex flex-wrap gap-1 justify-center">
-            ${Object.entries(p.rarity_weights).map(([r,w]) => {
-              const st = RARITY_STYLE[r];
-              return `<span class="px-2 py-0.5 rounded font-semibold"
-                            style="background:${st.accent}33;color:${st.accent};border:1px solid ${st.accent}66">
-                        ${r}: ${w}%</span>`;
-            }).join('')}
+      ${packs.map(p => {
+        const st = packStatuses[p.id] || { free_remaining: 0, free_per_hour: p.free_per_hour, seconds_left: 0 };
+        const hasFree = st.free_remaining > 0;
+        const canOpen = hasFree || profile.gold >= p.price;
+        const min = Math.floor(st.seconds_left / 60);
+        const sec = st.seconds_left % 60;
+
+        return `
+          <div class="pack-tile bg-slate-800/60 backdrop-blur border-2 border-slate-700 rounded-2xl p-5">
+            <div class="flex justify-between items-start mb-3">
+              <div class="text-6xl">🎴</div>
+              ${hasFree ? `
+                <span class="free-badge bg-emerald-600 text-white text-xs font-bold px-3 py-1 rounded-full">
+                  🎁 ${st.free_remaining}/${st.free_per_hour}
+                </span>` : `
+                <span class="bg-slate-700 text-slate-300 text-xs font-semibold px-3 py-1 rounded-full">
+                  ⏳ ${min}m${sec.toString().padStart(2,'0')}s
+                </span>`}
+            </div>
+            <h3 class="font-bold text-lg">${p.name}</h3>
+            <p class="text-slate-400 text-sm mb-3">
+              ${hasFree
+                ? `<span class="text-emerald-400 font-semibold">Gratuit</span> · sinon ${p.price} or`
+                : `${p.price} or · ${p.free_per_hour} gratuits/heure`}
+            </p>
+            <div class="text-xs mb-3 flex flex-wrap gap-1">
+              ${Object.entries(p.rarity_weights).map(([r,w]) => {
+                const rst = RARITY_STYLE[r];
+                return `<span class="px-2 py-0.5 rounded font-semibold"
+                              style="background:${rst.accent}33;color:${rst.accent};border:1px solid ${rst.accent}66">
+                          ${r}: ${w}%</span>`;
+              }).join('')}
+            </div>
+            <button class="open-pack-btn w-full ${hasFree ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-indigo-600 hover:bg-indigo-500'}
+                           p-2.5 rounded-lg font-semibold disabled:opacity-40 disabled:cursor-not-allowed
+                           hover:scale-[1.02] active:scale-[0.98]"
+                    data-pack="${p.id}" ${!canOpen ? 'disabled' : ''}>
+              ${hasFree ? '🎁 Ouvrir gratuitement' : `Ouvrir (${p.price} or)`}
+            </button>
           </div>
-          <button class="open-pack-btn w-full bg-indigo-600 hover:bg-indigo-500 p-2.5 rounded-lg font-semibold
-                         disabled:opacity-40 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98]"
-                  data-pack="${p.id}" ${profile.gold < p.price ? 'disabled':''}>
-            Ouvrir (${p.price} or)
-          </button>
-        </div>
-      `).join('')}
-    </div>`;
+        `;
+      }).join('')}
+    </div>
+  `;
   document.querySelectorAll('.open-pack-btn').forEach(b => {
     b.onclick = () => openPack(b.dataset.pack, b);
   });
@@ -451,7 +476,7 @@ async function openPack(packId, btn) {
 }
 
 // ============================================================
-// 🎬 Reveal de 5 cartes
+// REVEAL
 // ============================================================
 async function showReveal(cards) {
   $('pack-modal-content').innerHTML = `
@@ -471,18 +496,21 @@ async function showReveal(cards) {
   setTimeout(()=>document.body.classList.remove('shake'), 350);
   await sleep(350);
 
-  // Affichage des 5 cartes
   const totalBonus = cards.reduce((s,c)=> s + (c.bonus_gold||0), 0);
+  const wasFree = cards[0]?.was_free;
   const isMobile = window.innerWidth < 768;
   const gridCols = isMobile ? 'grid-cols-2' : 'grid-cols-5';
 
   $('pack-modal-content').innerHTML = `
     <div class="flex flex-col items-center gap-4">
-      <h2 class="text-2xl font-bold">Tu as obtenu ${cards.length} cartes !</h2>
+      <div class="text-center">
+        ${wasFree ? '<span class="bg-emerald-600 px-3 py-1 rounded-full text-xs font-bold">🎁 PACK GRATUIT</span>' : ''}
+        <h2 class="text-2xl font-bold mt-2">Tu as obtenu ${cards.length} cartes !</h2>
+      </div>
       <div class="grid ${gridCols} gap-3 w-full max-w-5xl px-2">
         ${cards.map((c,i) => `
           <div class="reveal-card" style="animation-delay:${i*80}ms">
-            ${cardHTML(c, { isNew: c.is_new, size: 'md' })}
+            ${cardHTML(c, { isNew: c.is_new })}
           </div>
         `).join('')}
       </div>
@@ -493,10 +521,8 @@ async function showReveal(cards) {
       </div>
     </div>`;
 
-  // Attache les tilts
   tiltAll($('pack-modal-content'));
 
-  // Confetti selon la meilleure rareté
   const best = cards.reduce((m,c) => {
     const order = { common:0, uncommon:1, rare:2, epic:3, legendary:4 };
     return order[c.rarity] > order[m] ? c.rarity : m;
@@ -509,9 +535,7 @@ async function showReveal(cards) {
     confetti({ particleCount: 150, spread: 100, origin:{y:0.6}, colors:['#a855f7','#c084fc','#e9d5ff'] });
   }
 
-  // Affiche le footer après délai
   setTimeout(() => $('reveal-footer')?.classList.remove('opacity-0'), 1500);
-
   $('close-reveal').onclick = closeReveal;
 }
 
@@ -529,7 +553,7 @@ async function closeReveal() {
 }
 
 // ============================================================
-// Collection
+// COLLECTION
 // ============================================================
 async function renderCollection() {
   const c = $('view-collection');
@@ -541,12 +565,8 @@ async function renderCollection() {
   if (!data.length) { c.innerHTML = '<p class="text-slate-400">Collection vide. Ouvre un pack !</p>'; return; }
 
   const total = data.reduce((s,i)=>s+i.quantity,0);
-  // Regroupement par rareté
   const byRarity = {};
-  data.forEach(i => {
-    const r = i.cards.rarity;
-    (byRarity[r] ||= []).push(i);
-  });
+  data.forEach(i => { (byRarity[i.cards.rarity] ||= []).push(i); });
   const order = ['legendary','epic','rare','uncommon','common'];
 
   c.innerHTML = `
@@ -559,24 +579,20 @@ async function renderCollection() {
         ${RARITY_STYLE[r].name} (${byRarity[r].reduce((s,i)=>s+i.quantity,0)})
       </h3>
       <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-7 gap-3 mb-2">
-        ${byRarity[r].map(i => {
-          const card = {
-            card_name: i.cards.name, name: i.cards.name,
-            rarity: i.cards.rarity, emoji: i.cards.emoji,
-            art_seed: i.cards.art_seed, accent_color: i.cards.accent_color,
-            word_a: i.cards.word_a, word_b: i.cards.word_b
-          };
-          return `
-            <div class="cursor-pointer" onclick="showCardDetail('${i.card_id}')">
-              ${cardHTML(card, { qty: i.quantity, size: 'md' })}
-            </div>`;
-        }).join('')}
+        ${byRarity[r].map(i => `
+          <div class="cursor-pointer" onclick="showCardDetail('${i.card_id}')">
+            ${cardHTML({
+              card_name: i.cards.name, name: i.cards.name,
+              rarity: i.cards.rarity, emoji: i.cards.emoji,
+              art_seed: i.cards.art_seed, accent_color: i.cards.accent_color,
+              word_a: i.cards.word_a, word_b: i.cards.word_b
+            }, { qty: i.quantity })}
+          </div>`).join('')}
       </div>
     `).join('')}
   `;
   tiltAll(c);
 
-  // Stocke les données pour le modal détail
   window.__collectionMap = {};
   data.forEach(i => {
     window.__collectionMap[i.card_id] = {
@@ -597,9 +613,7 @@ function showCardDetail(cardId) {
 
   $('detail-modal-content').innerHTML = `
     <div class="bg-slate-800/95 rounded-2xl p-6 max-w-sm w-full border border-white/10">
-      <div class="mx-auto mb-4" style="max-width:260px">
-        ${cardHTML(card, { size: 'lg' })}
-      </div>
+      <div class="mx-auto mb-4" style="max-width:260px">${cardHTML(card)}</div>
       <h3 class="font-bold text-center text-lg mb-1">${card.name}</h3>
       <p class="text-center text-sm mb-4" style="color:${st.accent}">${st.name}</p>
       <div class="text-xs text-slate-400 space-y-1 mb-4 bg-slate-900/60 rounded-lg p-3">
@@ -611,16 +625,10 @@ function showCardDetail(cardId) {
       <div class="flex gap-2">
         ${info.qty > 1 ? `
           <button onclick="sellDuplicate('${cardId}','${card.name.replace(/'/g,'')}',1)"
-                  class="flex-1 bg-amber-600 hover:bg-amber-500 p-2 rounded-lg font-semibold text-sm">
-            💰 Vendre 1
-          </button>
+                  class="flex-1 bg-amber-600 hover:bg-amber-500 p-2 rounded-lg font-semibold text-sm">💰 Vendre 1</button>
           <button onclick="sellDuplicate('${cardId}','${card.name.replace(/'/g,'')}',${info.qty-1})"
-                  class="flex-1 bg-amber-700 hover:bg-amber-600 p-2 rounded-lg font-semibold text-sm">
-            💰 Vendre tout
-          </button>` : ''}
-        <button onclick="closeDetail()" class="flex-1 bg-slate-700 hover:bg-slate-600 p-2 rounded-lg font-semibold text-sm">
-          Fermer
-        </button>
+                  class="flex-1 bg-amber-700 hover:bg-amber-600 p-2 rounded-lg font-semibold text-sm">💰 Tout</button>` : ''}
+        <button onclick="closeDetail()" class="flex-1 bg-slate-700 hover:bg-slate-600 p-2 rounded-lg font-semibold text-sm">Fermer</button>
       </div>
     </div>`;
   show('detail-modal');
@@ -635,12 +643,12 @@ async function sellDuplicate(cardId, name, qty = 1) {
   await refreshProfile();
   await renderCollection();
   await renderPacks();
-  if (qty === 1 && data[0].new_quantity === 0) closeDetail();
-  else if ($('detail-modal').classList.contains('hidden') === false) showCardDetail(cardId);
+  if (data[0].new_quantity === 0) closeDetail();
+  else if (!$('detail-modal').classList.contains('hidden')) showCardDetail(cardId);
 }
 
 // ============================================================
-// Amis
+// AMIS
 // ============================================================
 async function renderFriends() {
   const c = $('view-friends');
@@ -659,9 +667,7 @@ async function renderFriends() {
       <div class="flex gap-2">
         <input id="friend-input" type="text" placeholder="Pseudo…"
                class="flex-1 p-2 rounded-lg bg-slate-900 border border-white/10 focus:outline-none focus:ring-2 ring-indigo-500">
-        <button id="friend-send" class="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg font-semibold text-sm">
-          Envoyer
-        </button>
+        <button id="friend-send" class="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg font-semibold text-sm">Envoyer</button>
       </div>
     </div>
 
@@ -678,14 +684,13 @@ async function renderFriends() {
                 <button onclick="respondFriend(${r.id},false)"
                         class="bg-red-600 hover:bg-red-500 px-3 py-1 rounded-lg text-xs font-semibold">✗ Refuser</button>
               </div>
-            </div>
-          `).join('')}
+            </div>`).join('')}
         </div>
       </div>` : ''}
 
     <div class="bg-slate-800/60 rounded-2xl p-4 border border-white/10">
       <h3 class="font-bold mb-2 text-sm text-slate-300">🎉 Mes amis (${friends?.length || 0})</h3>
-      ${!friends?.length ? '<p class="text-slate-400 text-sm">Aucun ami pour le moment.</p>' : `
+      ${!friends?.length ? '<p class="text-slate-400 text-sm">Aucun ami.</p>' : `
         <div class="space-y-2">
           ${friends.map(f => `
             <div class="flex justify-between items-center bg-slate-900/60 rounded-lg p-2">
@@ -696,8 +701,7 @@ async function renderFriends() {
               </div>
               <button onclick="removeFriend('${f.friend_id}')"
                       class="bg-red-700 hover:bg-red-600 px-2 py-1 rounded-lg text-xs">Retirer</button>
-            </div>
-          `).join('')}
+            </div>`).join('')}
         </div>`}
     </div>`;
 
@@ -714,44 +718,59 @@ async function sendFriendRequest() {
   $('friend-input').value = '';
   await renderFriends();
 }
-
 async function respondFriend(id, accept) {
   const { error } = await sb.rpc('friend_respond', { p_id: id, p_accept: accept });
   if (error) return toast(error.message,'error');
-  toast(accept ? 'Ami ajouté !' : 'Demande refusée','success');
+  toast(accept ? 'Ami ajouté !' : 'Refusé','success');
   await renderFriends();
 }
-
 async function removeFriend(friendId) {
   if (!confirm('Retirer cet ami ?')) return;
   const { error } = await sb.rpc('friend_remove', { p_other: friendId });
   if (error) return toast(error.message,'error');
-  toast('Ami retiré','success');
+  toast('Retiré','success');
   await renderFriends();
 }
 
 // ============================================================
-// Admin
+// ADMIN v3 (onglets)
 // ============================================================
 async function renderAdmin() {
   const c = $('view-admin');
-  c.innerHTML = '<div class="text-slate-400">Chargement…</div>';
+  c.innerHTML = `
+    <h2 class="text-xl font-bold mb-4">🛡️ Administration</h2>
+    <div class="bg-slate-800/60 rounded-xl p-1 mb-4 flex gap-1 flex-wrap">
+      <button data-tab="users" class="admin-tab px-3 py-2 rounded-lg text-sm font-semibold ${adminTab==='users'?'active':''}">👥 Utilisateurs</button>
+      <button data-tab="cards" class="admin-tab px-3 py-2 rounded-lg text-sm font-semibold ${adminTab==='cards'?'active':''}">🎴 Cartes</button>
+      <button data-tab="packs" class="admin-tab px-3 py-2 rounded-lg text-sm font-semibold ${adminTab==='packs'?'active':''}">📦 Packs</button>
+      <button data-tab="logs"  class="admin-tab px-3 py-2 rounded-lg text-sm font-semibold ${adminTab==='logs'?'active':''}">📜 Logs</button>
+    </div>
+    <div id="admin-content"></div>`;
 
-  const [{ data: users }, { data: stats }, { data: activity }] = await Promise.all([
+  document.querySelectorAll('.admin-tab').forEach(b => {
+    b.onclick = () => { adminTab = b.dataset.tab; renderAdmin(); };
+  });
+
+  const content = $('admin-content');
+  if (adminTab === 'users') await renderAdminUsers(content);
+  else if (adminTab === 'cards') await renderAdminCards(content);
+  else if (adminTab === 'packs') await renderAdminPacks(content);
+  else if (adminTab === 'logs') await renderAdminLogs(content);
+}
+
+async function renderAdminUsers(content) {
+  content.innerHTML = '<div class="text-slate-400">Chargement…</div>';
+  const [{ data: users }, { data: stats }] = await Promise.all([
     sb.from('profiles').select('id, username, role, gold, banned, created_at').order('created_at', { ascending: false }),
-    sb.rpc('admin_stats'),
-    sb.rpc('admin_recent_activity', { p_limit: 20 })
+    sb.rpc('admin_stats')
   ]);
-
   const isAdmin = profile.role === 'admin';
   const canBan  = ['admin','super_modo'].includes(profile.role);
   const s = stats?.[0];
 
-  c.innerHTML = `
-    <h2 class="text-xl font-bold mb-4">🛡️ Administration</h2>
-
+  content.innerHTML = `
     ${s ? `
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
       <div class="bg-slate-800/60 rounded-xl p-3 border border-white/10">
         <div class="text-xs text-slate-400 uppercase">Utilisateurs</div>
         <div class="text-2xl font-bold">${s.total_users}</div>
@@ -770,12 +789,10 @@ async function renderAdmin() {
       </div>
     </div>` : ''}
 
-    <div class="bg-slate-800/60 rounded-xl p-3 mb-4 border border-white/10">
-      <input id="admin-search" type="text" placeholder="🔍 Rechercher un utilisateur…"
-             class="w-full p-2 rounded-lg bg-slate-900 border border-white/10 focus:outline-none focus:ring-2 ring-indigo-500">
-    </div>
+    <input id="admin-search" type="text" placeholder="🔍 Rechercher…"
+           class="w-full p-2 rounded-lg bg-slate-900 border border-white/10 mb-3 focus:outline-none focus:ring-2 ring-indigo-500">
 
-    <div class="bg-slate-800/60 rounded-xl overflow-x-auto border border-white/10 mb-4">
+    <div class="bg-slate-800/60 rounded-xl overflow-x-auto border border-white/10">
       <table class="w-full text-sm">
         <thead class="bg-slate-900/60">
           <tr>
@@ -786,9 +803,9 @@ async function renderAdmin() {
             <th class="p-2 text-left">Actions</th>
           </tr>
         </thead>
-        <tbody id="admin-tbody">
+        <tbody>
           ${users.map(u => `
-            <tr class="border-t border-slate-700/50 hover:bg-slate-900/40 admin-row" data-search="${u.username.toLowerCase()}">
+            <tr class="border-t border-slate-700/50 admin-row" data-search="${u.username.toLowerCase()}">
               <td class="p-2">${u.username}</td>
               <td class="p-2"><span class="text-xs px-2 py-0.5 rounded font-semibold ${ROLE_COLORS[u.role]}">${u.role}</span></td>
               <td class="p-2">${u.gold}</td>
@@ -804,55 +821,185 @@ async function renderAdmin() {
                     <option value="super_modo">super_modo</option>
                     <option value="admin">admin</option>
                   </select>
-                  <button class="grant-btn bg-amber-700 hover:bg-amber-600 px-2 py-1 rounded text-xs"
-                          data-user="${u.id}" data-username="${u.username}">+or</button>` : ''}
+                  <button class="grant-gold bg-amber-700 hover:bg-amber-600 px-2 py-1 rounded text-xs"
+                          data-user="${u.id}" data-username="${u.username}">+or</button>
+                  <button class="grant-card bg-purple-700 hover:bg-purple-600 px-2 py-1 rounded text-xs"
+                          data-user="${u.id}" data-username="${u.username}">+carte</button>` : ''}
                 ${canBan && u.id !== profile.id ? `
                   <button class="ban-btn bg-slate-700 hover:bg-slate-600 px-2 py-1 rounded text-xs"
                           data-user="${u.id}" data-banned="${u.banned}">
                     ${u.banned ? 'Débannir' : 'Bannir'}
                   </button>` : ''}
               </td>
-            </tr>
-          `).join('')}
+            </tr>`).join('')}
         </tbody>
       </table>
-    </div>
+    </div>`;
 
-    <div class="bg-slate-800/60 rounded-xl p-4 border border-white/10">
-      <h3 class="font-bold mb-2 text-sm">📜 Activité récente</h3>
-      <div class="space-y-1 max-h-64 overflow-y-auto text-xs">
-        ${(activity || []).map(a => `
-          <div class="flex justify-between gap-2 py-1 border-b border-slate-700/30">
-            <span><b>${a.actor}</b> — ${a.action}</span>
-            <span class="text-slate-400">${new Date(a.at).toLocaleString('fr-FR')}</span>
-          </div>
-        `).join('') || '<p class="text-slate-400">Aucune activité</p>'}
-      </div>
-    </div>
-  `;
-
-  // Search
-  $('admin-search').addEventListener('input', e => {
+  $('admin-search')?.addEventListener('input', e => {
     const q = e.target.value.toLowerCase();
     document.querySelectorAll('.admin-row').forEach(r => {
       r.style.display = r.dataset.search.includes(q) ? '' : 'none';
     });
   });
+  document.querySelectorAll('.role-select').forEach(s =>
+    s.onchange = () => setRole(s.dataset.user, s.value));
+  document.querySelectorAll('.ban-btn').forEach(b =>
+    b.onclick = () => toggleBan(b.dataset.user, b.dataset.banned === 'true'));
+  document.querySelectorAll('.grant-gold').forEach(b =>
+    b.onclick = () => grantGold(b.dataset.user, b.dataset.username));
+  document.querySelectorAll('.grant-card').forEach(b =>
+    b.onclick = () => grantCard(b.dataset.user, b.dataset.username));
+}
 
-  document.querySelectorAll('.role-select').forEach(sel => {
-    sel.onchange = () => setRole(sel.dataset.user, sel.value);
+async function renderAdminCards(content) {
+  content.innerHTML = '<div class="text-slate-400">Chargement…</div>';
+  const [{ data: total }, { data: cards }] = await Promise.all([
+    sb.rpc('admin_cards_count'),
+    sb.rpc('admin_list_cards', { p_limit: 60, p_offset: 0 })
+  ]);
+
+  content.innerHTML = `
+    <div class="bg-slate-800/60 rounded-xl p-4 mb-4 border border-white/10 flex justify-between items-center flex-wrap gap-3">
+      <div>
+        <div class="text-xs text-slate-400 uppercase">Cartes générées</div>
+        <div class="text-3xl font-bold">${total}</div>
+      </div>
+      <div class="flex gap-2 items-center">
+        <input id="gen-count" type="number" value="100" min="1" max="500"
+               class="w-24 p-2 rounded-lg bg-slate-900 border border-white/10 focus:outline-none">
+        <button id="gen-cards" class="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg font-semibold text-sm">
+          🎲 Générer
+        </button>
+      </div>
+    </div>
+
+    <div class="bg-slate-800/60 rounded-xl p-4 border border-white/10">
+      <h3 class="font-bold text-sm mb-2">60 dernières cartes</h3>
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 max-h-96 overflow-y-auto">
+        ${(cards || []).map(c => `
+          <div class="bg-slate-900/60 rounded-lg p-2 text-xs border border-white/5">
+            <div class="text-3xl text-center">${c.emoji}</div>
+            <div class="font-semibold truncate mt-1">${c.name}</div>
+            <div class="text-[10px]" style="color:${RARITY_STYLE[c.rarity].accent}">${RARITY_STYLE[c.rarity].name}</div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+
+  $('gen-cards').onclick = async () => {
+    const n = parseInt($('gen-count').value) || 100;
+    if (n < 1 || n > 500) return toast('Entre 1 et 500','error');
+    $('gen-cards').disabled = true;
+    $('gen-cards').textContent = 'Génération…';
+    const { data, error } = await sb.rpc('admin_generate_cards', { p_count: n });
+    if (error) return toast(error.message,'error');
+    toast(`✨ ${data} cartes générées`,'success');
+    await renderAdminCards(content);
+  };
+}
+
+async function renderAdminPacks(content) {
+  content.innerHTML = '<div class="text-slate-400">Chargement…</div>';
+  const { data: packs, error } = await sb.rpc('admin_list_packs');
+  if (error) return toast(error.message,'error');
+
+  content.innerHTML = `
+    <div class="space-y-3">
+      ${packs.map(p => `
+        <div class="bg-slate-800/60 rounded-xl p-4 border border-white/10">
+          <div class="flex justify-between items-center mb-3">
+            <h3 class="font-bold">${p.name}</h3>
+            <label class="flex items-center gap-2 text-xs">
+              <input type="checkbox" data-id="${p.id}" data-field="active" ${p.is_active?'checked':''}
+                     class="pack-edit w-4 h-4"> Actif
+            </label>
+          </div>
+          <div class="grid grid-cols-2 gap-2 mb-3">
+            <div>
+              <label class="text-xs text-slate-400">Prix (or)</label>
+              <input type="number" data-id="${p.id}" data-field="price" value="${p.price}"
+                     class="pack-edit w-full p-2 rounded-lg bg-slate-900 border border-white/10 text-sm">
+            </div>
+            <div>
+              <label class="text-xs text-slate-400">Gratuits/heure</label>
+              <input type="number" data-id="${p.id}" data-field="free" value="${p.free_per_hour}"
+                     class="pack-edit w-full p-2 rounded-lg bg-slate-900 border border-white/10 text-sm">
+            </div>
+          </div>
+          <details class="mb-3">
+            <summary class="text-xs text-slate-400 cursor-pointer">Poids de rareté</summary>
+            <div class="grid grid-cols-5 gap-1 mt-2">
+              ${Object.entries(p.rarity_weights).map(([r,w]) => `
+                <div>
+                  <label class="text-[10px]" style="color:${RARITY_STYLE[r].accent}">${r}</label>
+                  <input type="number" step="0.1" data-id="${p.id}" data-rarity="${r}"
+                         class="pack-weight w-full p-1 rounded bg-slate-900 border border-white/10 text-xs"
+                         value="${w}">
+                </div>`).join('')}
+            </div>
+          </details>
+          <button data-id="${p.id}" class="save-pack bg-emerald-600 hover:bg-emerald-500 w-full py-1.5 rounded-lg text-sm font-semibold">
+            💾 Enregistrer
+          </button>
+        </div>`).join('')}
+    </div>`;
+
+  document.querySelectorAll('.save-pack').forEach(b => {
+    b.onclick = async () => {
+      const id = b.dataset.id;
+      const price = parseInt(document.querySelector(`input[data-id="${id}"][data-field="price"]`).value);
+      const free = parseInt(document.querySelector(`input[data-id="${id}"][data-field="free"]`).value);
+      const active = document.querySelector(`input[data-id="${id}"][data-field="active"]`).checked;
+      const weights = {};
+      document.querySelectorAll(`input[data-id="${id}"][data-rarity]`).forEach(i => {
+        weights[i.dataset.rarity] = parseFloat(i.value);
+      });
+      const { error } = await sb.rpc('admin_update_pack', {
+        p_id: id, p_price: price, p_free_per_hour: free,
+        p_weights: weights, p_active: active
+      });
+      if (error) return toast(error.message,'error');
+      toast('Pack mis à jour','success');
+      await loadPackStatuses();
+    };
   });
-  document.querySelectorAll('.ban-btn').forEach(b => {
-    b.onclick = () => toggleBan(b.dataset.user, b.dataset.banned === 'true');
-  });
-  document.querySelectorAll('.grant-btn').forEach(b => {
-    b.onclick = () => grantGold(b.dataset.user, b.dataset.username);
+}
+
+async function renderAdminLogs(content) {
+  content.innerHTML = '<div class="text-slate-400">Chargement…</div>';
+  const { data: logs, error } = await sb.rpc('admin_list_logs', { p_filter: null, p_limit: 200 });
+  if (error) return toast(error.message,'error');
+
+  const actions = [...new Set((logs || []).map(l => l.action))];
+  content.innerHTML = `
+    <div class="bg-slate-800/60 rounded-xl p-4 border border-white/10">
+      <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
+        <h3 class="font-bold text-sm">📜 Journal (${logs?.length || 0})</h3>
+        <select id="log-filter" class="bg-slate-900 p-2 rounded-lg border border-white/10 text-sm">
+          <option value="">Toutes les actions</option>
+          ${actions.map(a => `<option value="${a}">${a}</option>`).join('')}
+        </select>
+      </div>
+      <div id="logs-list" class="space-y-1 max-h-[600px] overflow-y-auto text-xs">
+        ${(logs || []).map(l => `
+          <div class="log-row flex justify-between gap-2 py-1.5 border-b border-slate-700/30" data-action="${l.action}">
+            <span><b class="text-indigo-300">${l.actor}</b> — <span class="text-slate-300">${l.action}</span></span>
+            <span class="text-slate-400">${new Date(l.at).toLocaleString('fr-FR')}</span>
+          </div>`).join('')}
+      </div>
+    </div>`;
+
+  $('log-filter').addEventListener('change', e => {
+    const v = e.target.value;
+    document.querySelectorAll('.log-row').forEach(r => {
+      r.style.display = !v || r.dataset.action === v ? '' : 'none';
+    });
   });
 }
 
 async function setRole(userId, role) {
   if (!role) return;
-  if (!confirm(`Changer le rôle de cet utilisateur en "${role}" ?`)) return;
+  if (!confirm(`Changer le rôle en "${role}" ?`)) return;
   const { error } = await sb.rpc('set_user_role', { p_user_id: userId, p_role: role });
   if (error) return toast(error.message,'error');
   toast('Rôle mis à jour','success');
@@ -865,16 +1012,23 @@ async function toggleBan(userId, banned) {
   await renderAdmin();
 }
 async function grantGold(userId, username) {
-  const n = prompt(`Combien d'or donner à ${username} ? (négatif pour retirer)`);
+  const n = prompt(`Combien d'or pour ${username} ? (négatif pour retirer)`);
   if (!n) return;
   const { error } = await sb.rpc('admin_grant_gold', { p_user_id: userId, p_amount: parseInt(n) });
   if (error) return toast(error.message,'error');
   toast('Or mis à jour','success');
   await renderAdmin();
 }
+async function grantCard(userId, username) {
+  const r = prompt(`Rareté de la carte à donner à ${username} ?\n(common / uncommon / rare / epic / legendary)`);
+  if (!r) return;
+  const { error } = await sb.rpc('admin_grant_card', { p_user_id: userId, p_rarity: r.toLowerCase() });
+  if (error) return toast(error.message,'error');
+  toast('Carte donnée','success');
+}
 
 // ============================================================
-// Nav & bootstrap
+// NAV & bootstrap
 // ============================================================
 function bindNav() {
   document.querySelectorAll('.nav-btn').forEach(btn => {
@@ -908,6 +1062,32 @@ function leaveApp() {
   profile = null;
   hide('main-app'); show('auth-screen');
 }
+
+// Rafraîchit le compte à rebours des packs toutes les secondes
+setInterval(async () => {
+  if (!profile || $('view-packs').classList.contains('hidden')) return;
+  await loadPackStatuses();
+  const packs = document.querySelectorAll('.pack-tile');
+  if (!packs.length) return;
+  packs.forEach(tile => {
+    const btn = tile.querySelector('.open-pack-btn');
+    if (!btn) return;
+    const id = btn.dataset.pack;
+    const st = packStatuses[id];
+    if (!st) return;
+    const badge = tile.querySelector('.free-badge, span.bg-slate-700');
+    const hasFree = st.free_remaining > 0;
+    if (hasFree && badge && !badge.classList.contains('free-badge')) {
+      renderPacks();
+    } else if (!hasFree && badge) {
+      const min = Math.floor(st.seconds_left / 60);
+      const sec = st.seconds_left % 60;
+      if (badge.textContent.includes('⏳')) {
+        badge.textContent = `⏳ ${min}m${sec.toString().padStart(2,'0')}s`;
+      }
+    }
+  });
+}, 1000);
 
 document.addEventListener('DOMContentLoaded', async () => {
   $('btn-login').onclick = signIn;
