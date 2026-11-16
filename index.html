@@ -8,14 +8,79 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
   <style>
-    body { background: #0f172a; }
+    body { background: #0f172a; -webkit-tap-highlight-color: transparent; }
+    button:not(:disabled) { transition: all 0.2s ease; }
 
-    /* ---------- Animation d'ouverture ---------- */
+    /* ---------- Views : fade-in ---------- */
+    .view { animation: fadeInUp 0.35s ease-out; }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ---------- Modal ---------- */
+    #pack-modal { transition: opacity 0.3s ease; }
+    #pack-modal.closing { opacity: 0; }
+    #pack-modal-content { animation: modalIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    @keyframes modalIn {
+      from { transform: scale(0.85); opacity: 0; }
+      to   { transform: scale(1); opacity: 1; }
+    }
+
+    /* ---------- Pack box ---------- */
+    .pack-box {
+      filter: drop-shadow(0 0 30px rgba(139, 92, 246, 0.6));
+      animation: packIdle 1.2s ease-in-out infinite;
+    }
+    @keyframes packIdle {
+      0%, 100% { transform: scale(1) rotate(-3deg); }
+      50%      { transform: scale(1.08) rotate(3deg); }
+    }
+    .pack-box.shaking { animation: packShake 0.12s ease-in-out infinite; }
+    @keyframes packShake {
+      0%, 100% { transform: translate(0, 0) rotate(0) scale(1.15); }
+      25%      { transform: translate(-8px, 4px) rotate(-10deg) scale(1.2); }
+      75%      { transform: translate(8px, -4px) rotate(10deg) scale(1.2); }
+    }
+    .pack-box.burst { animation: packBurst 0.4s ease-out forwards; }
+    @keyframes packBurst {
+      0%   { transform: scale(1.2); opacity: 1; filter: brightness(1); }
+      40%  { transform: scale(2.2); opacity: 1; filter: brightness(3); }
+      100% { transform: scale(3.5); opacity: 0; filter: brightness(5); }
+    }
+
+    /* ---------- Flash ---------- */
+    .flash {
+      position: absolute;
+      width: 120px; height: 120px;
+      background: radial-gradient(circle, #fff 0%, transparent 70%);
+      border-radius: 50%;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .flash.active { animation: flashOut 0.5s ease-out; }
+    @keyframes flashOut {
+      0%   { opacity: 0; transform: scale(0.5); }
+      30%  { opacity: 1; transform: scale(1.5); }
+      100% { opacity: 0; transform: scale(5); }
+    }
+
+    /* ---------- Screen shake ---------- */
+    body.shake { animation: screenShake 0.3s ease-out; }
+    @keyframes screenShake {
+      0%, 100% { transform: translate(0, 0); }
+      20%      { transform: translate(-4px, 3px); }
+      40%      { transform: translate(4px, -3px); }
+      60%      { transform: translate(-3px, -2px); }
+      80%      { transform: translate(3px, 2px); }
+    }
+
+    /* ---------- Card flip ---------- */
     .card-reveal { perspective: 1600px; width: 280px; height: 400px; }
     .card-inner {
       position: relative; width: 100%; height: 100%;
       transform-style: preserve-3d;
-      transition: transform .9s cubic-bezier(.4,.1,.2,1);
+      transition: transform 0.9s cubic-bezier(0.4, 0.1, 0.2, 1);
       transform: rotateY(180deg);
     }
     .card-inner.revealed { transform: rotateY(0deg); }
@@ -29,40 +94,82 @@
       background: repeating-linear-gradient(45deg, #1e293b 0 10px, #334155 10px 20px);
       display: flex; align-items: center; justify-content: center;
       border: 3px solid #475569;
-      animation: card-wobble 1.2s ease-in-out infinite;
-    }
-    @keyframes card-wobble {
-      0%, 100% { transform: rotateY(180deg) rotateZ(-3deg); }
-      50%      { transform: rotateY(180deg) rotateZ(3deg); }
+      font-size: 80px;
     }
     .card-front {
       display: flex; flex-direction: column;
       background: linear-gradient(180deg, var(--rarity-color) 0%, #0f172a 55%);
       border: 3px solid var(--rarity-border);
-      box-shadow: 0 0 0 1px rgba(255,255,255,.08) inset,
-                  0 0 60px 8px var(--rarity-glow);
-      animation: glow-pulse 1.6s ease-in-out infinite;
+      animation: glowPulse 1.6s ease-in-out infinite;
     }
-    @keyframes glow-pulse {
-      0%, 100% { box-shadow: 0 0 0 1px rgba(255,255,255,.08) inset, 0 0 40px 6px var(--rarity-glow); }
-      50%      { box-shadow: 0 0 0 1px rgba(255,255,255,.08) inset, 0 0 90px 25px var(--rarity-glow); }
+    @keyframes glowPulse {
+      0%, 100% { box-shadow: 0 0 0 1px rgba(255,255,255,.08) inset,
+                             0 0 40px 6px var(--rarity-glow); }
+      50%      { box-shadow: 0 0 0 1px rgba(255,255,255,.08) inset,
+                             0 0 90px 25px var(--rarity-glow); }
     }
-    .card-front img { flex: 1; object-fit: contain; background: rgba(0,0,0,.25); }
-    .card-front .card-info { padding: 12px; text-align: center; background: linear-gradient(180deg, transparent, #0f172a); }
+    .card-emoji {
+      flex: 1;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 130px;
+      filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.5));
+      animation: emojiFloat 2s ease-in-out infinite;
+    }
+    @keyframes emojiFloat {
+      0%, 100% { transform: translateY(0); }
+      50%      { transform: translateY(-8px); }
+    }
+    .card-front .card-info {
+      padding: 14px; text-align: center;
+      background: linear-gradient(180deg, transparent, #0f172a);
+    }
+
+    /* ---------- Badge new ---------- */
     .badge-new {
       position: absolute; top: -12px; right: -12px;
       background: linear-gradient(135deg, #fbbf24, #f59e0b);
       color: #0f172a; font-weight: 800; font-size: 11px;
-      padding: 4px 10px; border-radius: 999px;
+      padding: 4px 12px; border-radius: 999px;
       box-shadow: 0 0 20px rgba(251,191,36,.7);
-      animation: badge-pop .5s cubic-bezier(.2,1.6,.4,1) .9s both;
+      z-index: 10;
+      animation: badgePop 0.5s cubic-bezier(.2,1.6,.4,1) 0.6s both;
     }
-    @keyframes badge-pop { from { transform: scale(0) rotate(-20deg); } to { transform: scale(1) rotate(0); } }
+    @keyframes badgePop {
+      from { transform: scale(0) rotate(-20deg); }
+      to   { transform: scale(1) rotate(0); }
+    }
 
-    #btn-daily.ready { animation: daily-pulse 1.5s ease-in-out infinite; }
-    @keyframes daily-pulse {
+    /* ---------- Reveal footer ---------- */
+    #reveal-footer {
+      opacity: 0;
+      transform: translateY(10px);
+      animation: footerUp 0.5s ease 0.3s forwards;
+    }
+    @keyframes footerUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ---------- Daily ---------- */
+    #btn-daily.ready { animation: dailyPulse 1.5s ease-in-out infinite; }
+    @keyframes dailyPulse {
       0%, 100% { box-shadow: 0 0 0 0 rgba(16,185,129,.7); }
-      50%      { box-shadow: 0 0 0 6px rgba(16,185,129,0); }
+      50%      { box-shadow: 0 0 0 8px rgba(16,185,129,0); }
+    }
+
+    /* ---------- Cartes packs/collection ---------- */
+    .pack-card, .collection-card {
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .pack-card:hover, .collection-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px -10px rgba(99, 102, 241, 0.4);
+    }
+
+    /* ---------- Skeleton ---------- */
+    .skeleton { animation: pulse 1.5s ease-in-out infinite; }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.4; }
+      50%      { opacity: 0.8; }
     }
   </style>
 </head>
@@ -70,37 +177,44 @@
 
 <!-- ============ AUTH ============ -->
 <div id="auth-screen" class="min-h-screen flex items-center justify-center p-4">
-  <div class="bg-slate-800 rounded-xl p-8 w-full max-w-md space-y-4 shadow-2xl">
+  <div class="bg-slate-800 rounded-2xl p-8 w-full max-w-md space-y-4 shadow-2xl">
     <h1 class="text-2xl font-bold text-center">⚔️ TCG Wiki Master</h1>
-    <input id="email"    type="email"    placeholder="Email"                class="w-full p-2 rounded bg-slate-700 focus:outline-none focus:ring-2 ring-indigo-500">
-    <input id="password" type="password" placeholder="Mot de passe"         class="w-full p-2 rounded bg-slate-700 focus:outline-none focus:ring-2 ring-indigo-500">
-    <input id="username" type="text"     placeholder="Pseudo (inscription)" class="w-full p-2 rounded bg-slate-700 focus:outline-none focus:ring-2 ring-indigo-500">
+    <p class="text-slate-400 text-sm text-center -mt-2">1000 or offerts à l'inscription 🎉</p>
+    <input id="email"    type="email"    placeholder="Email"
+           class="w-full p-3 rounded-lg bg-slate-700 focus:outline-none focus:ring-2 ring-indigo-500 transition-all">
+    <input id="password" type="password" placeholder="Mot de passe"
+           class="w-full p-3 rounded-lg bg-slate-700 focus:outline-none focus:ring-2 ring-indigo-500 transition-all">
+    <input id="username" type="text"     placeholder="Pseudo (inscription)"
+           class="w-full p-3 rounded-lg bg-slate-700 focus:outline-none focus:ring-2 ring-indigo-500 transition-all">
     <div class="flex gap-2">
-      <button id="btn-login"  class="flex-1 bg-indigo-600 hover:bg-indigo-500 p-2 rounded font-semibold">Connexion</button>
-      <button id="btn-signup" class="flex-1 bg-emerald-600 hover:bg-emerald-500 p-2 rounded font-semibold">Inscription</button>
+      <button id="btn-login"  class="flex-1 bg-indigo-600 hover:bg-indigo-500 p-3 rounded-lg font-semibold hover:scale-[1.02] active:scale-[0.98]">Connexion</button>
+      <button id="btn-signup" class="flex-1 bg-emerald-600 hover:bg-emerald-500 p-3 rounded-lg font-semibold hover:scale-[1.02] active:scale-[0.98]">Inscription</button>
     </div>
   </div>
 </div>
 
 <!-- ============ APP ============ -->
 <div id="main-app" class="hidden">
-  <header class="bg-slate-800 px-6 py-3 flex justify-between items-center flex-wrap gap-2">
+  <header class="bg-slate-800 px-6 py-3 flex justify-between items-center flex-wrap gap-2 sticky top-0 z-20">
     <div class="flex items-center gap-3">
       <h1 class="font-bold text-lg">⚔️ TCG Wiki Master</h1>
       <span id="user-badge" class="text-sm text-slate-300"></span>
       <span id="role-badge" class="text-xs px-2 py-0.5 rounded font-semibold bg-slate-600"></span>
     </div>
     <div class="flex items-center gap-3">
-      <button id="btn-daily" class="text-sm bg-slate-700 px-3 py-1 rounded font-semibold">🎁</button>
+      <button id="btn-daily" class="text-sm bg-slate-700 px-3 py-1 rounded-lg font-semibold">🎁</button>
       <span class="text-sm">💰 <span id="gold-display" class="font-bold">0</span> or</span>
-      <button id="btn-logout" class="text-sm bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded">Déconnexion</button>
+      <button id="btn-logout" class="text-sm bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded-lg">Déconnexion</button>
     </div>
   </header>
 
   <nav class="bg-slate-900 px-6 py-2 flex gap-2">
-    <button data-view="packs"      class="nav-btn bg-slate-700 px-3 py-1 rounded text-sm">🃏 Packs</button>
-    <button data-view="collection" class="nav-btn px-3 py-1 rounded text-sm hover:bg-slate-700">📚 Collection</button>
-    <button data-view="admin"      class="nav-btn px-3 py-1 rounded text-sm hover:bg-slate-700 hidden">🛡️ Admin</button>
+    <button data-view="packs"
+            class="nav-btn bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded-lg text-sm transition-colors">🃏 Packs</button>
+    <button data-view="collection"
+            class="nav-btn px-3 py-1 rounded-lg text-sm hover:bg-slate-700 transition-colors">📚 Collection</button>
+    <button data-view="admin"
+            class="nav-btn px-3 py-1 rounded-lg text-sm hover:bg-slate-700 transition-colors hidden">🛡️ Admin</button>
   </nav>
 
   <main class="p-6 max-w-5xl mx-auto">
@@ -115,11 +229,11 @@
   <div id="pack-modal-content"></div>
 </div>
 
-<div id="toast" class="fixed bottom-4 right-4 hidden px-4 py-2 rounded shadow-lg z-50"></div>
+<div id="toast" class="fixed bottom-4 right-4 hidden px-4 py-3 rounded-lg shadow-lg z-50 font-semibold"></div>
 
 <script>
 // ============================================================
-// ⚙️ CONFIG — remplace ces deux valeurs par celles de ton projet
+// ⚙️ CONFIG
 // ============================================================
 const SUPABASE_URL      = 'https://ktapitfayxaxslaexvgq.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0YXBpdGZheXhheHNsYWV4dmdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ4MTQ2ODYsImV4cCI6MjExMDM5MDY4Nn0.EumQomIvDrT3U56SMHdy0hRpo2iHeXtxTAh5GxUMrAA';
@@ -132,6 +246,7 @@ let profile = null;
 const $ = (id) => document.getElementById(id);
 const show = (id) => $(id).classList.remove('hidden');
 const hide = (id) => $(id).classList.add('hidden');
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
 const ROLE_COLORS = {
   admin: 'bg-red-600', super_modo: 'bg-orange-500',
@@ -146,15 +261,15 @@ const RARITY_STYLE = {
   legendary: { color: '#b45309', border: '#fbbf24', glow: 'rgba(251,191,36,.9)' }
 };
 
-const RARITY_SELL = { common: 20, uncommon: 50, rare: 150, epic: 400, legendary: 1000 };
+const RARITY_SELL = { common: 30, uncommon: 75, rare: 200, epic: 600, legendary: 2000 };
 
 // ============================================================
-// Utilitaires
+// Helpers
 // ============================================================
 function toast(msg, type = 'info') {
   const el = $('toast');
   el.textContent = msg;
-  el.className = `fixed bottom-4 right-4 px-4 py-2 rounded shadow-lg z-50 ${
+  el.className = `fixed bottom-4 right-4 px-4 py-3 rounded-lg shadow-lg z-50 font-semibold ${
     type === 'error' ? 'bg-red-600' : type === 'success' ? 'bg-emerald-600' : 'bg-slate-700'
   }`;
   show('toast');
@@ -162,9 +277,8 @@ function toast(msg, type = 'info') {
   el._t = setTimeout(() => hide('toast'), 3500);
 }
 
-function cardImage(card) {
-  return card.image_url ||
-    `https://api.dicebear.com/9.x/adventurer/svg?seed=${encodeURIComponent(card.name || card.card_name)}`;
+function getEmoji(card) {
+  return card.emoji || '❔';
 }
 
 // ============================================================
@@ -221,15 +335,15 @@ async function refreshDaily() {
   if (error || !data?.[0]) return;
   const btn = $('btn-daily');
   if (data[0].can_claim) {
-    btn.textContent = '🎁 +300 or';
+    btn.textContent = '🎁 +500 or';
     btn.disabled = false;
-    btn.className = 'text-sm bg-emerald-600 hover:bg-emerald-500 px-3 py-1 rounded font-semibold ready';
+    btn.className = 'text-sm bg-emerald-600 hover:bg-emerald-500 px-3 py-1 rounded-lg font-semibold ready';
   } else {
     const h = Math.floor(data[0].hours_left);
     const m = Math.floor((data[0].hours_left - h) * 60);
     btn.textContent = `🎁 ${h}h${m.toString().padStart(2, '0')}m`;
     btn.disabled = true;
-    btn.className = 'text-sm bg-slate-700 px-3 py-1 rounded opacity-60 cursor-not-allowed';
+    btn.className = 'text-sm bg-slate-700 px-3 py-1 rounded-lg opacity-60 cursor-not-allowed';
   }
 }
 
@@ -237,7 +351,8 @@ async function claimDaily() {
   const { data, error } = await sb.rpc('claim_daily_bonus');
   if (error) return toast(error.message, 'error');
   toast(`🎁 +${data[0].gold_earned} or !`, 'success');
-  confetti({ particleCount: 60, spread: 70, origin: { y: 0.7 }, colors: ['#10b981','#34d399','#6ee7b7'] });
+  confetti({ particleCount: 80, spread: 80, origin: { y: 0.7 },
+             colors: ['#10b981','#34d399','#6ee7b7'] });
   await refreshProfile();
   await refreshDaily();
   await renderPacks();
@@ -247,58 +362,109 @@ async function claimDaily() {
 // Packs
 // ============================================================
 async function renderPacks() {
+  const container = $('view-packs');
+  container.style.opacity = '0.5';
+  container.style.transition = 'opacity 0.2s';
+
   const { data, error } = await sb.from('packs').select('*').eq('is_active', true).order('price');
   if (error) return toast(error.message, 'error');
 
-  $('view-packs').innerHTML = `
+  container.innerHTML = `
     <h2 class="text-xl font-bold mb-4">Packs disponibles</h2>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       ${data.map(p => `
-        <div class="bg-slate-800 rounded-xl p-5">
-          <h3 class="font-bold text-lg">${p.name}</h3>
-          <p class="text-slate-400 text-sm mb-3">💰 ${p.price} or</p>
-          <div class="text-xs text-slate-400 mb-3 flex flex-wrap gap-2">
-            ${Object.entries(p.rarity_weights).map(([r, w]) =>
-              `<span class="px-1.5 py-0.5 rounded ${RARITY_STYLE[r]?.color ? '' : 'bg-slate-600'}"
-                     style="background:${RARITY_STYLE[r]?.color || '#475569'}">${r}: ${w}%</span>`
-            ).join('')}
+        <div class="pack-card bg-slate-800 rounded-2xl p-5 border-2 border-slate-700 hover:border-indigo-500">
+          <div class="text-center text-6xl mb-2">🎴</div>
+          <h3 class="font-bold text-lg text-center">${p.name}</h3>
+          <p class="text-slate-400 text-sm text-center mb-3">💰 ${p.price} or</p>
+          <div class="text-xs text-slate-300 mb-3 flex flex-wrap gap-1 justify-center">
+            ${Object.entries(p.rarity_weights).map(([r, w]) => {
+              const st = RARITY_STYLE[r] || RARITY_STYLE.common;
+              return `<span class="px-2 py-0.5 rounded font-semibold"
+                            style="background:${st.color};border:1px solid ${st.border}">
+                        ${r}: ${w}%
+                      </span>`;
+            }).join('')}
           </div>
-          <button class="open-pack-btn w-full bg-indigo-600 hover:bg-indigo-500 p-2 rounded font-semibold disabled:opacity-40 disabled:cursor-not-allowed"
-                  data-pack="${p.id}" data-price="${p.price}" ${profile.gold < p.price ? 'disabled' : ''}>
+          <button class="open-pack-btn w-full bg-indigo-600 hover:bg-indigo-500 p-2.5 rounded-lg font-semibold
+                         disabled:opacity-40 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98]"
+                  data-pack="${p.id}" ${profile.gold < p.price ? 'disabled' : ''}>
             Ouvrir (${p.price} or)
           </button>
         </div>
       `).join('')}
     </div>
   `;
+  container.style.opacity = '1';
+
   document.querySelectorAll('.open-pack-btn').forEach(btn => {
     btn.onclick = () => openPack(btn.dataset.pack, btn);
   });
 }
 
 async function openPack(packId, btn) {
-  if (btn) { btn.disabled = true; btn.textContent = 'Ouverture…'; }
+  btn.disabled = true;
+  const original = btn.textContent;
+  btn.textContent = '✨ Ouverture…';
   const { data, error } = await sb.rpc('open_pack', { p_pack_id: packId });
   if (error) {
-    if (btn) { btn.disabled = false; btn.textContent = `Ouvrir`; }
+    btn.disabled = false;
+    btn.textContent = original;
     return toast(error.message, 'error');
   }
   showPackReveal(data[0]);
 }
 
-function showPackReveal(card) {
+// ============================================================
+// 🎬 Animation d'ouverture
+// ============================================================
+async function showPackReveal(card) {
   const style = RARITY_STYLE[card.rarity] || RARITY_STYLE.common;
-  const img = cardImage(card);
 
+  // Étape 1 : le pack
+  $('pack-modal-content').innerHTML = `
+    <div class="relative flex items-center justify-center" style="min-height:400px;width:280px">
+      <div class="flash" id="flash"></div>
+      <div class="pack-box text-[160px] select-none" id="pack-box">🎴</div>
+    </div>
+  `;
+  show('pack-modal');
+  const packBox = $('pack-box');
+
+  // Étape 2 : shake
+  await sleep(700);
+  packBox.classList.add('shaking');
+
+  // Étape 3 : burst + flash + screen shake
+  await sleep(650);
+  packBox.classList.remove('shaking');
+  packBox.classList.add('burst');
+  $('flash').classList.add('active');
+  document.body.classList.add('shake');
+  setTimeout(() => document.body.classList.remove('shake'), 350);
+
+  // Étape 4 : carte révélée (flip)
+  await sleep(300);
+  renderCardReveal(card, style);
+
+  setTimeout(() => $('card-inner').classList.add('revealed'), 100);
+  setTimeout(() => {
+    const footer = $('reveal-footer');
+    if (footer) footer.classList.remove('opacity-0');
+  }, 200);
+  setTimeout(() => triggerConfetti(card.rarity), 700);
+}
+
+function renderCardReveal(card, style) {
   $('pack-modal-content').innerHTML = `
     <div class="flex flex-col items-center gap-5">
       <div class="card-reveal">
         <div class="card-inner" id="card-inner">
-          <div class="card-face card-back text-5xl">🎴</div>
+          <div class="card-face card-back">🎴</div>
           <div class="card-face card-front"
                style="--rarity-color:${style.color};--rarity-border:${style.border};--rarity-glow:${style.glow}">
             ${card.is_new ? '<div class="badge-new">✨ NOUVELLE</div>' : ''}
-            <img src="${img}" alt="${card.card_name}">
+            <div class="card-emoji">${getEmoji(card)}</div>
             <div class="card-info">
               <p class="font-bold text-base">${card.card_name}</p>
               <p class="text-xs uppercase tracking-wide mt-1" style="color:${style.border}">${card.rarity}</p>
@@ -306,84 +472,96 @@ function showPackReveal(card) {
           </div>
         </div>
       </div>
-      <div id="reveal-footer" class="opacity-0 transition-opacity duration-500 text-center space-y-2">
+      <div id="reveal-footer" class="opacity-0 text-center space-y-2">
         ${card.bonus_gold > 0
-          ? `<p class="text-emerald-400 font-bold">+${card.bonus_gold} or bonus !</p>` : ''}
-        <button id="close-reveal" class="bg-indigo-600 hover:bg-indigo-500 px-6 py-2 rounded font-semibold">
+          ? `<p class="text-emerald-400 font-bold text-lg">+${card.bonus_gold} or bonus !</p>` : ''}
+        <button id="close-reveal"
+                class="bg-indigo-600 hover:bg-indigo-500 px-8 py-2.5 rounded-lg font-semibold
+                       hover:scale-[1.03] active:scale-[0.97]">
           Continuer
         </button>
       </div>
     </div>
   `;
-  show('pack-modal');
+  $('close-reveal').onclick = closeReveal;
+}
 
-  setTimeout(() => {
-    $('card-inner').classList.add('revealed');
-    $('reveal-footer').classList.remove('opacity-0');
-    if (['epic', 'legendary'].includes(card.rarity)) {
-      confetti({
-        particleCount: card.rarity === 'legendary' ? 220 : 100,
-        spread: card.rarity === 'legendary' ? 130 : 90,
-        origin: { y: 0.6 },
-        colors: card.rarity === 'legendary'
-          ? ['#fbbf24','#f59e0b','#fde68a','#fff']
-          : ['#a855f7','#c084fc','#e9d5ff']
-      });
-    }
-  }, 1100);
+function triggerConfetti(rarity) {
+  if (rarity === 'legendary') {
+    confetti({ particleCount: 250, spread: 140, origin: { y: 0.6 },
+               colors: ['#fbbf24','#f59e0b','#fde68a','#fff'] });
+    setTimeout(() => confetti({ particleCount: 120, angle: 60, spread: 80,
+               origin: { x: 0, y: 0.7 }, colors: ['#fbbf24','#fff'] }), 200);
+    setTimeout(() => confetti({ particleCount: 120, angle: 120, spread: 80,
+               origin: { x: 1, y: 0.7 }, colors: ['#fbbf24','#fff'] }), 200);
+  } else if (rarity === 'epic') {
+    confetti({ particleCount: 120, spread: 100, origin: { y: 0.6 },
+               colors: ['#a855f7','#c084fc','#e9d5ff'] });
+  }
+}
 
-  $('close-reveal').onclick = async () => {
-    hide('pack-modal');
-    await refreshProfile();
-    await renderPacks();
-    await renderCollection();
-    await refreshDaily();
-  };
+async function closeReveal() {
+  const modal = $('pack-modal');
+  modal.classList.add('closing');
+  await sleep(260);
+  modal.classList.remove('closing');
+  hide('pack-modal');
+  $('pack-modal-content').innerHTML = '';
+  await refreshProfile();
+  await renderPacks();
+  await renderCollection();
+  await refreshDaily();
 }
 
 // ============================================================
 // Collection
 // ============================================================
 async function renderCollection() {
+  const container = $('view-collection');
+  container.style.opacity = '0.5';
+  container.style.transition = 'opacity 0.2s';
+
   const { data, error } = await sb.from('collection_items')
-    .select('card_id, quantity, first_source, acquired_at, cards(name, rarity, description, image_url)')
+    .select('card_id, quantity, first_source, acquired_at, cards(name, rarity, description, emoji)')
     .order('acquired_at', { ascending: false });
   if (error) return toast(error.message, 'error');
 
   if (!data.length) {
-    $('view-collection').innerHTML =
-      '<p class="text-slate-400">Ta collection est vide. Ouvre un pack !</p>';
+    container.innerHTML = '<p class="text-slate-400">Ta collection est vide. Ouvre un pack !</p>';
+    container.style.opacity = '1';
     return;
   }
 
   const total = data.reduce((s, i) => s + i.quantity, 0);
-  $('view-collection').innerHTML = `
+  container.innerHTML = `
     <h2 class="text-xl font-bold mb-4">Collection (${total} cartes)</h2>
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
       ${data.map(i => {
-        const st  = RARITY_STYLE[i.cards.rarity] || RARITY_STYLE.common;
-        const img = cardImage(i.cards);
+        const st = RARITY_STYLE[i.cards.rarity] || RARITY_STYLE.common;
         const sellPrice = RARITY_SELL[i.cards.rarity] || 10;
         return `
-          <div class="rounded-xl overflow-hidden border-2"
+          <div class="collection-card rounded-xl overflow-hidden border-2"
                style="border-color:${st.border}; background:linear-gradient(180deg,${st.color},#0f172a)">
-            <img src="${img}" alt="${i.cards.name}" class="w-full h-32 object-contain bg-black/20">
-            <div class="p-2">
+            <div class="text-center text-6xl py-4">${i.cards.emoji || '❔'}</div>
+            <div class="p-2 bg-slate-900/70">
               <div class="flex justify-between items-center mb-1">
                 <span class="font-semibold text-sm truncate">${i.cards.name}</span>
-                <span class="text-xs bg-black/40 px-1.5 rounded">x${i.quantity}</span>
+                <span class="text-xs bg-black/50 px-1.5 rounded">x${i.quantity}</span>
               </div>
               <p class="text-xs uppercase tracking-wide" style="color:${st.border}">${i.cards.rarity}</p>
               ${i.quantity > 1 ? `
-                <button class="sell-btn w-full mt-2 bg-slate-900/60 hover:bg-slate-900 text-xs py-1 rounded"
+                <button class="sell-btn w-full mt-2 bg-slate-700 hover:bg-slate-600 text-xs py-1 rounded
+                               hover:scale-[1.02] active:scale-[0.98]"
                         data-card="${i.card_id}" data-name="${i.cards.name}">
-                  💰 Vendre 1 (+${sellPrice})
+                  💰 Vendre (+${sellPrice})
                 </button>` : ''}
             </div>
           </div>`;
       }).join('')}
     </div>
   `;
+  container.style.opacity = '1';
+
   document.querySelectorAll('.sell-btn').forEach(b => {
     b.onclick = () => sellDuplicate(b.dataset.card, b.dataset.name);
   });
@@ -431,9 +609,7 @@ async function renderAdmin() {
           ${data.map(u => `
             <tr class="border-t border-slate-700">
               <td class="p-2">${u.username}</td>
-              <td class="p-2">
-                <span class="text-xs px-2 py-0.5 rounded font-semibold ${ROLE_COLORS[u.role]}">${u.role}</span>
-              </td>
+              <td class="p-2"><span class="text-xs px-2 py-0.5 rounded font-semibold ${ROLE_COLORS[u.role]}">${u.role}</span></td>
               <td class="p-2">${u.gold}</td>
               <td class="p-2">${u.banned
                 ? '<span class="text-red-400">Banni</span>'
@@ -525,10 +701,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   $('btn-daily').onclick  = claimDaily;
   bindNav();
 
+  // Escape + clic backdrop pour fermer le modal
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && $('close-reveal')) $('close-reveal').click();
+  });
+  $('pack-modal').addEventListener('click', e => {
+    if (e.target === $('pack-modal') && $('close-reveal')) $('close-reveal').click();
+  });
+
   const { data: { session } } = await sb.auth.getSession();
   if (session) await enterApp();
 
-  sb.auth.onAuthStateChange((_event, session) => {
+  sb.auth.onAuthStateChange((_e, session) => {
     if (session) enterApp(); else leaveApp();
   });
 });
