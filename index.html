@@ -5,106 +5,112 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>DAMOKO tcg</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🛠️%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
   <style>
-    body { background: #0a0a0f; -webkit-tap-highlight-color: transparent;
-           background-image: radial-gradient(circle at 20% 0%, #1e1b4b 0%, transparent 50%),
-                             radial-gradient(circle at 80% 100%, #4c1d95 0%, transparent 50%); }
-    button:not(:disabled) { transition: all .2s ease; }
-    .view { animation: fadeUp .35s ease-out; }
-    @keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+    * { box-sizing: border-box; }
+    html, body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+    body {
+      background: #09090e;
+      background-image:
+        radial-gradient(circle at 15% -10%, rgba(99,102,241,.15), transparent 40%),
+        radial-gradient(circle at 85% 110%, rgba(168,85,247,.12), transparent 40%);
+      -webkit-tap-highlight-color: transparent;
+      color: #e5e7eb;
+    }
+    button:not(:disabled) { transition: all .2s cubic-bezier(.4,0,.2,1); }
+    button:disabled { cursor: not-allowed; }
 
-    #pack-modal, #detail-modal { transition: opacity .25s ease; }
+    /* ---- Views ---- */
+    .view { animation: fadeUp .4s cubic-bezier(.4,0,.2,1); }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+
+    /* ---- Modals ---- */
+    #pack-modal, #detail-modal { transition: opacity .3s ease; }
     #pack-modal.closing, #detail-modal.closing { opacity: 0; }
 
-    /* ---- CARTE TCG full-art ---- */
+    /* ---- CARTE TCG ---- */
     .tcg-card {
       position: relative;
       aspect-ratio: 5 / 7;
-      border-radius: 16px;
+      border-radius: 18px;
       overflow: hidden;
       transform-style: preserve-3d;
-      transition: transform .3s cubic-bezier(.2,.9,.3,1.2);
+      transition: transform .35s cubic-bezier(.2,.9,.3,1.2), box-shadow .3s;
       cursor: pointer;
       user-select: none;
       will-change: transform;
       container-type: inline-size;
     }
     .tcg-card .tcg-bg { position: absolute; inset: 0; }
-
-    /* Emoji ÉNORME (fallback px pour vieux navigateurs) */
     .tcg-card .tcg-emoji {
       position: absolute;
       top: 0; bottom: 22%; left: 0; right: 0;
       display: flex; align-items: center; justify-content: center;
-      font-size: 90px;          /* fallback */
-      font-size: 70cqw;          /* moderne */
+      font-size: 90px;
+      font-size: 70cqw;
       line-height: 1;
-      filter: drop-shadow(0 10px 20px rgba(0,0,0,.6));
+      filter: drop-shadow(0 12px 24px rgba(0,0,0,.7));
       transform: translateZ(20px);
-      transition: transform .3s;
+      transition: transform .35s;
     }
-    .tcg-card:hover .tcg-emoji { transform: translateZ(35px) scale(1.05); }
-
+    .tcg-card:hover .tcg-emoji { transform: translateZ(40px) scale(1.06); }
     .tcg-card .tcg-shine {
       position: absolute; inset: 0; pointer-events: none;
       background: radial-gradient(circle at var(--mx,50%) var(--my,50%),
-                                  rgba(255,255,255,.35) 0%, transparent 45%);
+                                  rgba(255,255,255,.4) 0%, transparent 45%);
       opacity: 0; transition: opacity .3s;
     }
     .tcg-card:hover .tcg-shine { opacity: 1; }
-
     .tcg-card .tcg-vignette {
       position: absolute; inset: 0;
       background:
-        radial-gradient(ellipse at 50% 30%, transparent 30%, rgba(0,0,0,.4) 100%),
-        linear-gradient(180deg, transparent 60%, rgba(0,0,0,.9) 100%);
+        radial-gradient(ellipse at 50% 30%, transparent 35%, rgba(0,0,0,.45) 100%),
+        linear-gradient(180deg, transparent 55%, rgba(0,0,0,.95) 100%);
       pointer-events: none;
     }
     .tcg-card .tcg-footer {
       position: absolute; bottom: 0; left: 0; right: 0;
-      padding: 10px 10px 12px;
+      padding: 12px 10px 14px;
       background: linear-gradient(180deg, transparent, rgba(0,0,0,.95));
       text-align: center;
     }
-
-    /* TEXTE ÉNORME */
     .tcg-card .tcg-name {
       font-weight: 900;
-      font-size: 14px;                              /* fallback */
-      font-size: clamp(12px, 8cqw, 22px);           /* moderne */
-      text-shadow: 0 2px 6px rgba(0,0,0,.9);
+      font-size: 14px;
+      font-size: clamp(12px, 8cqw, 24px);
+      text-shadow: 0 2px 8px rgba(0,0,0,.95);
       line-height: 1.15;
-      letter-spacing: 0.01em;
     }
     .tcg-card .tcg-rarity {
-      font-size: 11px;                              /* fallback */
-      font-size: clamp(9px, 5cqw, 15px);            /* moderne */
-      letter-spacing: .15em; text-transform: uppercase;
-      margin-top: 4px; font-weight: 800;
+      font-size: 11px;
+      font-size: clamp(9px, 5cqw, 15px);
+      letter-spacing: .18em; text-transform: uppercase;
+      margin-top: 5px; font-weight: 800;
     }
     .tcg-card .tcg-qty {
-      position: absolute; top: 8px; right: 8px;
-      background: rgba(0,0,0,.8); backdrop-filter: blur(4px);
+      position: absolute; top: 10px; right: 10px;
+      background: rgba(0,0,0,.85); backdrop-filter: blur(6px);
       padding: 3px 10px; border-radius: 999px;
-      font-size: 12px;                              /* fallback */
+      font-size: 12px;
       font-size: clamp(10px, 5cqw, 16px);
       font-weight: 800;
       border: 1px solid rgba(255,255,255,.2);
       z-index: 3;
     }
     .tcg-card .tcg-new {
-      position: absolute; top: -6px; left: 50%; transform: translateX(-50%);
+      position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
       background: linear-gradient(135deg,#fbbf24,#f59e0b);
       color: #0f172a; font-weight: 900;
-      font-size: 11px;                              /* fallback */
+      font-size: 11px;
       font-size: clamp(10px, 4cqw, 14px);
       padding: 4px 12px; border-radius: 999px;
       box-shadow: 0 0 20px rgba(251,191,36,.7);
-      z-index: 5;
-      white-space: nowrap;
+      z-index: 5; white-space: nowrap;
       animation: badgePop .5s cubic-bezier(.2,1.6,.4,1) both;
     }
     @keyframes badgePop { from{transform:translateX(-50%) scale(0) rotate(-20deg)} to{transform:translateX(-50%) scale(1) rotate(0)} }
@@ -119,212 +125,256 @@
     .tcg-card.rarity-legendary .tcg-bg { animation: holoShift 4s linear infinite; background-size: 200% 200%; }
     @keyframes holoShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
 
-    /* ---- ANIMATION D'OUVERTURE ---- */
-    .reveal-stage {
-      position: relative; width: 100%; height: 440px;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .reveal-pack {
-      font-size: 170px;
-      animation: packIdle 1.2s ease-in-out infinite;
-      filter: drop-shadow(0 0 40px rgba(139,92,246,.7));
-      z-index: 10;
+    /* ============================================================
+       ANIMATION GACHA
+       ============================================================ */
+    .gacha-stage {
       position: relative;
+      width: 100%;
+      display: flex; align-items: center; justify-content: center;
+      min-height: 420px;
+    }
+    .gacha-pack {
+      font-size: 170px;
+      filter: drop-shadow(0 0 50px rgba(139,92,246,.8));
+      animation: packIdle 1.3s ease-in-out infinite;
+      z-index: 5;
     }
     @keyframes packIdle {
-      0%,100% { transform: scale(1) rotate(-3deg); }
-      50%     { transform: scale(1.08) rotate(3deg); }
+      0%,100% { transform: scale(1) rotate(-4deg); }
+      50%     { transform: scale(1.1) rotate(4deg); }
     }
-    .reveal-pack.charging { animation: packShake .1s ease-in-out infinite; }
+    .gacha-pack.charging { animation: packShake .09s ease-in-out infinite; }
     @keyframes packShake {
       0%,100% { transform: translate(0,0) rotate(0) scale(1.15); }
-      25%     { transform: translate(-9px,4px) rotate(-8deg) scale(1.22); }
-      75%     { transform: translate(9px,-4px) rotate(8deg) scale(1.22); }
+      25%     { transform: translate(-10px,5px) rotate(-8deg) scale(1.25); }
+      75%     { transform: translate(10px,-5px) rotate(8deg) scale(1.25); }
     }
-    .reveal-pack.burst { animation: packBurst .45s ease-out forwards; }
+    .gacha-pack.burst { animation: packBurst .5s ease-out forwards; }
     @keyframes packBurst {
       0%   { transform: scale(1.2); opacity: 1; filter: brightness(1); }
-      40%  { transform: scale(2.5); opacity: 1; filter: brightness(3.5); }
-      100% { transform: scale(4); opacity: 0; filter: brightness(6); }
+      40%  { transform: scale(2.5); opacity: 1; filter: brightness(4); }
+      100% { transform: scale(4); opacity: 0; filter: brightness(8); }
+    }
+    .gacha-flash-fullscreen {
+      position: fixed; inset: 0;
+      background: #fff; pointer-events: none;
+      opacity: 0; z-index: 100;
+    }
+    .gacha-flash-fullscreen.fire { animation: fullFlash .4s ease-out; }
+    @keyframes fullFlash {
+      0% { opacity: 0; } 25% { opacity: .8; } 100% { opacity: 0; }
     }
 
-    /* Fan de mini-cards derrière le pack */
-    .reveal-fan {
-      position: absolute; top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      width: 200px; height: 200px;
-      pointer-events: none;
+    /* GRILLE RÉVÉLATION */
+    .gacha-grid {
+      display: grid; gap: 14px;
+      max-width: 1000px; width: 100%;
+      padding: 0 8px;
+      perspective: 2000px;
     }
-    .reveal-mini {
-      position: absolute; top: 50%; left: 50%;
-      width: 64px; height: 90px;
-      background: repeating-linear-gradient(45deg, #1e293b 0 10px, #334155 10px 20px);
-      border: 2px solid #475569;
-      border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 32px;
-      transform-origin: center;
-      transform: translate(-50%, -50%) rotate(calc(var(--i) * 18deg - 36deg)) translateY(-30px) scale(0.3);
-      opacity: 0;
-      transition: all 0.5s cubic-bezier(.2,1.6,.4,1);
-    }
-    .reveal-fan.visible .reveal-mini {
-      opacity: 0.85;
-      transform: translate(-50%, -50%) rotate(calc(var(--i) * 18deg - 36deg)) translateY(-30px) scale(1);
-      transition-delay: calc(var(--i) * 60ms);
-    }
-    .reveal-fan.charging .reveal-mini {
-      animation: miniShake .12s ease-in-out infinite;
-    }
-    @keyframes miniShake {
-      0%,100% { transform: translate(-50%, -50%) rotate(calc(var(--i) * 18deg - 36deg)) translateY(-30px) scale(1); }
-      50%     { transform: translate(-50%, -50%) rotate(calc(var(--i) * 18deg - 36deg + 5deg)) translateY(-38px) scale(1.02); }
-    }
-    .reveal-fan.burst .reveal-mini {
-      opacity: 0;
-      transform: translate(-50%, -50%) rotate(calc(var(--i) * 72deg)) translateY(-350px) scale(0.4);
-      transition-delay: calc(var(--i) * 30ms);
-    }
-
-    .reveal-flash {
-      position: absolute; top: 50%; left: 50%;
-      width: 200px; height: 200px;
-      transform: translate(-50%, -50%);
-      background: radial-gradient(circle, #fff 0%, transparent 70%);
-      border-radius: 50%;
-      opacity: 0; pointer-events: none;
-    }
-    .reveal-flash.active { animation: flashOut .6s ease-out; }
-    @keyframes flashOut {
-      0%   { opacity: 0; transform: translate(-50%,-50%) scale(0.5); }
-      30%  { opacity: 1; transform: translate(-50%,-50%) scale(1.5); }
-      100% { opacity: 0; transform: translate(-50%,-50%) scale(6); }
-    }
-
-    /* ---- Cartes du reveal : flip 3D individuel ---- */
-    .reveal-slot {
-      perspective: 1200px;
-      aspect-ratio: 5 / 7;
+    .gacha-slot {
       position: relative;
+      aspect-ratio: 5 / 7;
       container-type: inline-size;
+      perspective: 1400px;
     }
-    .reveal-slot-inner {
+    .gacha-slot-inner {
       position: relative; width: 100%; height: 100%;
       transform-style: preserve-3d;
-      transition: transform 0.8s cubic-bezier(.4,.1,.2,1);
+      transition: transform .8s cubic-bezier(.4,.1,.2,1);
       transform: rotateY(180deg);
     }
-    .reveal-slot.flipped .reveal-slot-inner { transform: rotateY(0deg); }
-    .reveal-back {
+    .gacha-slot.flipped .gacha-slot-inner { transform: rotateY(0deg); }
+    .gacha-back {
       position: absolute; inset: 0;
-      background: repeating-linear-gradient(45deg, #1e293b 0 10px, #334155 10px 20px);
+      backface-visibility: hidden; -webkit-backface-visibility: hidden;
+      transform: rotateY(180deg);
       border-radius: 16px;
+      background:
+        radial-gradient(circle at 50% 30%, rgba(139,92,246,.3), transparent 60%),
+        repeating-linear-gradient(45deg, #1e293b 0 10px, #334155 10px 20px);
       border: 2px solid #475569;
       display: flex; align-items: center; justify-content: center;
-      font-size: 60px;
       font-size: 32cqw;
-      backface-visibility: hidden;
-      -webkit-backface-visibility: hidden;
-      transform: rotateY(180deg);
-      box-shadow: 0 8px 30px -10px rgba(139,92,246,.5);
+      box-shadow: inset 0 0 40px rgba(139,92,246,.3);
     }
-    .reveal-front {
+    .gacha-front {
       position: absolute; inset: 0;
-      backface-visibility: hidden;
-      -webkit-backface-visibility: hidden;
-    }
-    .reveal-slot.pre-charge {
-      animation: preShake .15s ease-in-out 3;
-    }
-    @keyframes preShake {
-      0%,100% { transform: translateX(0); }
-      25%     { transform: translateX(-5px) rotate(-1deg); }
-      75%     { transform: translateX(5px) rotate(1deg); }
+      backface-visibility: hidden; -webkit-backface-visibility: hidden;
     }
 
-    body.shake { animation: screenShake .35s ease-out; }
+    /* Aura de charge (pulse autour de la carte) */
+    .gacha-slot.charging::before {
+      content: '';
+      position: absolute;
+      inset: -8px;
+      border-radius: 22px;
+      background: radial-gradient(circle, var(--rarity-color) 0%, transparent 70%);
+      filter: blur(20px);
+      opacity: 0.8;
+      animation: auraPulse .4s ease-in-out infinite;
+      z-index: -1;
+    }
+    @keyframes auraPulse {
+      0%,100% { opacity: 0.6; transform: scale(0.95); }
+      50%     { opacity: 1; transform: scale(1.05); }
+    }
+
+    /* Faisceau de lumière */
+    .gacha-beam {
+      position: absolute;
+      left: 50%;
+      bottom: 50%;
+      transform: translateX(-50%);
+      width: 55%;
+      height: 0;
+      background: linear-gradient(to top,
+        var(--beam-color) 0%,
+        #fff 40%,
+        var(--beam-color) 70%,
+        transparent 100%);
+      border-radius: 50%;
+      filter: blur(6px);
+      box-shadow: 0 0 40px 12px var(--beam-color);
+      pointer-events: none;
+      z-index: 20;
+      opacity: 0;
+    }
+    .gacha-beam.fire { animation: beamFire .8s cubic-bezier(.2,0,.4,1) forwards; }
+    @keyframes beamFire {
+      0%   { height: 0; opacity: 0; }
+      15%  { opacity: 1; }
+      70%  { height: 450px; opacity: 1; }
+      100% { height: 600px; opacity: 0; }
+    }
+    .gacha-beam.fire.big { animation-duration: 1s; }
+
+    /* Flash local sur la carte */
+    .gacha-flash {
+      position: absolute; inset: 0;
+      background: radial-gradient(circle, #fff 0%, transparent 70%);
+      border-radius: 16px;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 15;
+    }
+    .gacha-flash.fire { animation: localFlash .45s ease-out; }
+    @keyframes localFlash {
+      0% { opacity: 0; } 30% { opacity: 1; } 100% { opacity: 0; }
+    }
+
+    /* Impact après flip */
+    .gacha-slot.impact { animation: cardImpact .4s ease-out; }
+    @keyframes cardImpact {
+      0% { transform: scale(1); }
+      35% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+
+    body.shake { animation: screenShake .4s ease-out; }
     @keyframes screenShake {
-      0%,100%{transform:translate(0,0)} 20%{transform:translate(-5px,4px)}
-      40%{transform:translate(5px,-4px)} 60%{transform:translate(-4px,-3px)}
+      0%,100%{transform:translate(0,0)} 20%{transform:translate(-6px,4px)}
+      40%{transform:translate(6px,-4px)} 60%{transform:translate(-4px,-3px)}
       80%{transform:translate(4px,3px)}
     }
 
+    /* ---- Pack tiles ---- */
+    .pack-tile {
+      transition: all .3s cubic-bezier(.4,0,.2,1);
+      background: linear-gradient(145deg, rgba(30,30,50,.7), rgba(15,15,25,.7));
+    }
+    .pack-tile:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 25px 50px -15px rgba(139,92,246,.6);
+      border-color: rgba(139,92,246,.5);
+    }
+
+    /* ---- Misc ---- */
     #btn-daily.ready { animation: dailyPulse 1.5s ease-in-out infinite; }
     @keyframes dailyPulse {
       0%,100%{box-shadow:0 0 0 0 rgba(16,185,129,.7)}
-      50%{box-shadow:0 0 0 8px rgba(16,185,129,0)}
+      50%{box-shadow:0 0 0 10px rgba(16,185,129,0)}
     }
-
-    .pack-tile { transition: all .25s cubic-bezier(.4,0,.2,1); }
-    .pack-tile:hover { transform: translateY(-4px);
-                       box-shadow: 0 20px 40px -10px rgba(139,92,246,.5); }
-
-    #toast { animation: toastIn .25s ease-out; }
-    @keyframes toastIn { from{transform:translateY(20px);opacity:0} to{transform:translateY(0);opacity:1} }
-
-    .admin-tab { transition: all .15s; }
-    .admin-tab.active { background: #4f46e5; }
-    .admin-tab:not(.active):hover { background: rgba(255,255,255,.05); }
-
+    #toast { animation: toastIn .3s cubic-bezier(.4,0,.2,1); }
+    @keyframes toastIn { from{transform:translateY(30px);opacity:0} to{transform:translateY(0);opacity:1} }
+    .admin-tab { transition: all .2s; }
+    .admin-tab.active { background: linear-gradient(135deg, #6366f1, #8b5cf6); box-shadow: 0 4px 20px rgba(99,102,241,.4); }
+    .admin-tab:not(.active):hover { background: rgba(255,255,255,.06); }
     .free-badge { animation: freeGlow 2s ease-in-out infinite; }
     @keyframes freeGlow {
-      0%,100% { box-shadow: 0 0 0 0 rgba(16,185,129,.5); }
-      50%     { box-shadow: 0 0 0 4px rgba(16,185,129,0); }
+      0%,100% { box-shadow: 0 0 0 0 rgba(16,185,129,.6); }
+      50%     { box-shadow: 0 0 0 6px rgba(16,185,129,0); }
     }
+
+    /* Nav pill */
+    .nav-btn { border-radius: 999px; }
+    .nav-btn.active {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      box-shadow: 0 4px 20px rgba(99,102,241,.4);
+    }
+    .nav-btn:not(.active):hover { background: rgba(255,255,255,.06); }
   </style>
 </head>
-<body class="min-h-screen text-slate-100 font-sans">
+<body class="min-h-screen">
 
 <!-- AUTH -->
 <div id="auth-screen" class="min-h-screen flex items-center justify-center p-4">
-  <div class="bg-slate-800/70 backdrop-blur-xl rounded-2xl p-8 w-full max-w-md space-y-4 shadow-2xl border border-white/10">
-    <h1 class="text-3xl font-bold text-center">🛠️ DAMOKO tcg</h1>
-    <p class="text-slate-400 text-sm text-center -mt-2">1000 or + 10 packs gratuits/heure 🎉</p>
-    <input id="email"    type="email"    placeholder="Email"
-           class="w-full p-3 rounded-lg bg-slate-700/60 border border-white/10 focus:outline-none focus:ring-2 ring-indigo-500">
-    <input id="password" type="password" placeholder="Mot de passe"
-           class="w-full p-3 rounded-lg bg-slate-700/60 border border-white/10 focus:outline-none focus:ring-2 ring-indigo-500">
-    <input id="username" type="text"     placeholder="Pseudo (inscription)"
-           class="w-full p-3 rounded-lg bg-slate-700/60 border border-white/10 focus:outline-none focus:ring-2 ring-indigo-500">
+  <div class="bg-slate-900/60 backdrop-blur-xl rounded-2xl p-8 w-full max-w-md space-y-4 shadow-2xl border border-white/10">
+    <div class="text-center">
+      <div class="text-5xl mb-2">🛠️</div>
+      <h1 class="text-3xl font-black">DAMOKO tcg</h1>
+      <p class="text-slate-400 text-sm mt-1">1000 or + 10 packs gratuits/heure 🎉</p>
+    </div>
+    <input id="email" type="email" placeholder="Email" autocomplete="email"
+           class="w-full p-3 rounded-xl bg-slate-800/70 border border-white/10 focus:outline-none focus:ring-2 ring-indigo-500 transition-all">
+    <input id="password" type="password" placeholder="Mot de passe" autocomplete="current-password"
+           class="w-full p-3 rounded-xl bg-slate-800/70 border border-white/10 focus:outline-none focus:ring-2 ring-indigo-500 transition-all">
+    <input id="username" type="text" placeholder="Pseudo (inscription)" autocomplete="username"
+           class="w-full p-3 rounded-xl bg-slate-800/70 border border-white/10 focus:outline-none focus:ring-2 ring-indigo-500 transition-all">
     <div class="flex gap-2">
-      <button id="btn-login"  class="flex-1 bg-indigo-600 hover:bg-indigo-500 p-3 rounded-lg font-semibold hover:scale-[1.02] active:scale-[0.98]">Connexion</button>
-      <button id="btn-signup" class="flex-1 bg-emerald-600 hover:bg-emerald-500 p-3 rounded-lg font-semibold hover:scale-[1.02] active:scale-[0.98]">Inscription</button>
+      <button id="btn-login" class="flex-1 bg-indigo-600 hover:bg-indigo-500 p-3 rounded-xl font-bold hover:scale-[1.02] active:scale-[0.98]">Connexion</button>
+      <button id="btn-signup" class="flex-1 bg-emerald-600 hover:bg-emerald-500 p-3 rounded-xl font-bold hover:scale-[1.02] active:scale-[0.98]">Inscription</button>
     </div>
   </div>
 </div>
 
 <!-- APP -->
 <div id="main-app" class="hidden">
-  <header class="bg-slate-900/70 backdrop-blur-xl px-6 py-3 flex justify-between items-center flex-wrap gap-2 sticky top-0 z-20 border-b border-white/5">
+  <header class="bg-slate-900/60 backdrop-blur-xl px-6 py-3 flex justify-between items-center flex-wrap gap-2 sticky top-0 z-20 border-b border-white/5">
     <div class="flex items-center gap-3">
-      <h1 class="font-bold text-xl">🛠️ DAMOKO tcg</h1>
-      <span id="user-badge" class="text-sm text-slate-300"></span>
-      <span id="role-badge" class="text-xs px-2 py-0.5 rounded font-semibold bg-slate-600"></span>
+      <span class="text-2xl">🛠️</span>
+      <h1 class="font-black text-lg tracking-tight">DAMOKO tcg</h1>
+      <span id="user-badge" class="text-sm text-slate-400"></span>
+      <span id="role-badge" class="text-xs px-2 py-0.5 rounded-full font-bold bg-slate-600"></span>
     </div>
-    <div class="flex items-center gap-3">
-      <button id="btn-daily" class="text-sm bg-slate-700 px-3 py-1 rounded-lg font-semibold">🎁</button>
-      <span class="text-sm">💰 <span id="gold-display" class="font-bold">0</span> or</span>
-      <button id="btn-logout" class="text-sm bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded-lg">Déconnexion</button>
+    <div class="flex items-center gap-2">
+      <button id="btn-daily" class="text-sm bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-full font-bold">🎁</button>
+      <div class="flex items-center gap-1.5 bg-slate-800 px-3 py-1.5 rounded-full">
+        <span class="text-sm">💰</span>
+        <span id="gold-display" class="font-bold">0</span>
+      </div>
+      <button id="btn-logout" class="text-sm bg-slate-800 hover:bg-red-900/50 px-3 py-1.5 rounded-full font-semibold text-slate-300">Déconnexion</button>
     </div>
   </header>
 
-  <nav class="bg-slate-900/40 px-6 py-2 flex gap-2 border-b border-white/5 flex-wrap">
-    <button data-view="packs"      class="nav-btn bg-indigo-600 px-3 py-1 rounded-lg text-sm">🃏 Packs</button>
-    <button data-view="collection" class="nav-btn px-3 py-1 rounded-lg text-sm hover:bg-slate-700">📚 Collection</button>
-    <button data-view="friends"    class="nav-btn px-3 py-1 rounded-lg text-sm hover:bg-slate-700">👥 Amis</button>
-    <button data-view="admin"      class="nav-btn px-3 py-1 rounded-lg text-sm hover:bg-slate-700 hidden">🛡️ Admin</button>
+  <nav class="bg-slate-900/40 px-6 py-2 flex gap-1 border-b border-white/5 flex-wrap">
+    <button data-view="packs" class="nav-btn active px-4 py-1.5 text-sm font-bold">🃏 Packs</button>
+    <button data-view="collection" class="nav-btn px-4 py-1.5 text-sm font-semibold text-slate-300">📚 Collection</button>
+    <button data-view="friends" class="nav-btn px-4 py-1.5 text-sm font-semibold text-slate-300">👥 Amis</button>
+    <button data-view="admin" class="nav-btn px-4 py-1.5 text-sm font-semibold text-slate-300 hidden">🛡️ Admin</button>
   </nav>
 
   <main class="p-6 max-w-6xl mx-auto">
-    <div id="view-packs"      class="view"></div>
+    <div id="view-packs" class="view"></div>
     <div id="view-collection" class="view hidden"></div>
-    <div id="view-friends"    class="view hidden"></div>
-    <div id="view-admin"      class="view hidden"></div>
+    <div id="view-friends" class="view hidden"></div>
+    <div id="view-admin" class="view hidden"></div>
   </main>
 </div>
 
 <!-- MODAL PACK -->
-<div id="pack-modal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 z-40 overflow-auto">
+<div id="pack-modal" class="hidden fixed inset-0 bg-black/95 backdrop-blur-md flex items-center justify-center p-4 z-40 overflow-auto">
   <div id="pack-modal-content" class="max-w-6xl w-full"></div>
 </div>
 
@@ -334,7 +384,7 @@
   <div id="detail-modal-content"></div>
 </div>
 
-<div id="toast" class="fixed bottom-4 right-4 hidden px-4 py-3 rounded-lg shadow-lg z-50 font-semibold"></div>
+<div id="toast" class="fixed bottom-6 right-6 hidden px-5 py-3 rounded-xl shadow-2xl z-50 font-bold"></div>
 
 <script>
 // ============================================================
@@ -354,7 +404,6 @@ const hide = id => $(id).classList.add('hidden');
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 const ROLE_COLORS = { admin:'bg-red-600', super_modo:'bg-orange-500', modo:'bg-blue-500', user:'bg-slate-600' };
-
 const RARITY_STYLE = {
   common:    { accent:'#94a3b8', name:'Commune',     bg:['#64748b','#334155'] },
   uncommon:  { accent:'#22c55e', name:'Peu commune', bg:['#22c55e','#14532d'] },
@@ -362,21 +411,20 @@ const RARITY_STYLE = {
   epic:      { accent:'#a855f7', name:'Épique',      bg:['#a855f7','#581c87'] },
   legendary: { accent:'#fbbf24', name:'Légendaire',  bg:['#fbbf24','#7c2d12'] }
 };
-const SELL_PRICE = { common: 30, uncommon: 75, rare: 200, epic: 600, legendary: 2000 };
+const SELL_PRICE = { common: 10, uncommon: 25, rare: 75, epic: 200, legendary: 600 };
 
 function toast(msg, type='info') {
   const el = $('toast');
   el.textContent = msg;
-  el.className = `fixed bottom-4 right-4 px-4 py-3 rounded-lg shadow-lg z-50 font-semibold ${
-    type==='error'?'bg-red-600':type==='success'?'bg-emerald-600':'bg-slate-700'}`;
+  el.className = `fixed bottom-6 right-6 px-5 py-3 rounded-xl shadow-2xl z-50 font-bold ${
+    type==='error'?'bg-red-600':type==='success'?'bg-emerald-600':'bg-slate-800'}`;
   show('toast');
   clearTimeout(el._t);
   el._t = setTimeout(()=>hide('toast'), 3500);
 }
 
 function cardBg(card) {
-  const r = card.rarity || 'common';
-  const pal = (RARITY_STYLE[r] || RARITY_STYLE.common).bg;
+  const pal = (RARITY_STYLE[card.rarity] || RARITY_STYLE.common).bg;
   const seed = card.art_seed || 0;
   const x1 = 20 + (seed % 60);
   const y1 = 15 + ((seed>>3) % 50);
@@ -392,17 +440,14 @@ function cardHTML(card, opts = {}) {
   const st = RARITY_STYLE[rarity] || RARITY_STYLE.common;
   const name = card.card_name || card.name;
   const emoji = card.emoji || '❔';
-  const qty = opts.qty;
-  const isNew = opts.isNew;
-
   return `
-    <div class="tcg-card rarity-${rarity}" data-name="${name}" data-rarity="${rarity}">
+    <div class="tcg-card rarity-${rarity}">
       <div class="tcg-bg" style="background:${cardBg(card)}"></div>
       <div class="tcg-shine"></div>
       <div class="tcg-emoji">${emoji}</div>
       <div class="tcg-vignette"></div>
-      ${qty ? `<div class="tcg-qty">×${qty}</div>` : ''}
-      ${isNew ? '<div class="tcg-new">✨ NOUVELLE</div>' : ''}
+      ${opts.qty ? `<div class="tcg-qty">×${opts.qty}</div>` : ''}
+      ${opts.isNew ? '<div class="tcg-new">✨ NOUVELLE</div>' : ''}
       <div class="tcg-footer">
         <div class="tcg-name">${name}</div>
         <div class="tcg-rarity" style="color:${st.accent}">${st.name}</div>
@@ -416,21 +461,17 @@ function attachTilt(el) {
     const r = el.getBoundingClientRect();
     const x = (e.clientX - r.left) / r.width;
     const y = (e.clientY - r.top) / r.height;
-    const rx = (0.5 - y) * 22;
-    const ry = (x - 0.5) * 22;
-    el.style.transform = `perspective(900px) rotateX(${rx}deg) rotateY(${ry}deg) scale(1.05)`;
+    el.style.transform = `perspective(900px) rotateX(${(0.5-y)*22}deg) rotateY(${(x-0.5)*22}deg) scale(1.05)`;
     el.style.setProperty('--mx', `${x*100}%`);
     el.style.setProperty('--my', `${y*100}%`);
-    if (inner) inner.style.transform = `translateZ(35px) scale(1.06) translate(${(x-0.5)*10}px, ${(y-0.5)*10}px)`;
+    if (inner) inner.style.transform = `translateZ(40px) scale(1.06) translate(${(x-0.5)*10}px, ${(y-0.5)*10}px)`;
   });
   el.addEventListener('mouseleave', () => {
     el.style.transform = '';
     if (inner) inner.style.transform = '';
   });
 }
-function tiltAll(root) {
-  root.querySelectorAll('.tcg-card').forEach(attachTilt);
-}
+function tiltAll(root) { root.querySelectorAll('.tcg-card').forEach(attachTilt); }
 
 // ============================================================
 // AUTH
@@ -467,7 +508,7 @@ async function refreshProfile() {
   $('gold-display').textContent = profile.gold;
   const rb = $('role-badge');
   rb.textContent = profile.role;
-  rb.className = `text-xs px-2 py-0.5 rounded font-semibold ${ROLE_COLORS[profile.role]}`;
+  rb.className = `text-xs px-2 py-0.5 rounded-full font-bold ${ROLE_COLORS[profile.role]}`;
   const adminBtn = document.querySelector('[data-view="admin"]');
   if (['admin','super_modo','modo'].includes(profile.role)) adminBtn.classList.remove('hidden');
   else adminBtn.classList.add('hidden');
@@ -481,13 +522,13 @@ async function refreshDaily() {
   if (!data?.[0]) return;
   const btn = $('btn-daily');
   if (data[0].can_claim) {
-    btn.textContent = '🎁 +500 or'; btn.disabled = false;
-    btn.className = 'text-sm bg-emerald-600 hover:bg-emerald-500 px-3 py-1 rounded-lg font-semibold ready';
+    btn.textContent = '🎁 +500'; btn.disabled = false;
+    btn.className = 'text-sm bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 rounded-full font-bold ready';
   } else {
     const h = Math.floor(data[0].hours_left);
     const m = Math.floor((data[0].hours_left - h) * 60);
     btn.textContent = `🎁 ${h}h${m.toString().padStart(2,'0')}m`; btn.disabled = true;
-    btn.className = 'text-sm bg-slate-700 px-3 py-1 rounded-lg opacity-60 cursor-not-allowed';
+    btn.className = 'text-sm bg-slate-800 px-3 py-1.5 rounded-full font-bold opacity-60';
   }
 }
 async function claimDaily() {
@@ -509,16 +550,16 @@ async function loadPackStatuses() {
 async function renderPacks() {
   const c = $('view-packs');
   c.innerHTML = '<div class="text-slate-400">Chargement…</div>';
-  const [{ data: packs, error }] = await Promise.all([
-    sb.from('packs').select('*').eq('is_active', true).order('price'),
-    loadPackStatuses()
-  ]);
+  const { data: packs, error } = await sb.from('packs').select('*').eq('is_active', true).order('price');
   if (error) return toast(error.message,'error');
+  await loadPackStatuses();
 
   c.innerHTML = `
-    <h2 class="text-xl font-bold mb-2">Packs disponibles</h2>
-    <p class="text-slate-400 text-sm mb-4">Chaque pack contient <b class="text-indigo-400">5 cartes</b>. Les packs gratuits se rechargent toutes les heures.</p>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="mb-6">
+      <h2 class="text-2xl font-black mb-1">Packs</h2>
+      <p class="text-slate-400 text-sm">5 cartes par pack · Les packs gratuits se rechargent toutes les heures</p>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
       ${packs.map(p => {
         const st = packStatuses[p.id] || { free_remaining: 0, free_per_hour: p.free_per_hour, seconds_left: 0 };
         const hasFree = st.free_remaining > 0;
@@ -526,43 +567,41 @@ async function renderPacks() {
         const min = Math.floor(st.seconds_left / 60);
         const sec = st.seconds_left % 60;
         return `
-          <div class="pack-tile bg-slate-800/60 backdrop-blur border-2 border-slate-700 rounded-2xl p-5">
-            <div class="flex justify-between items-start mb-3">
-              <div class="text-7xl">🎴</div>
+          <div class="pack-tile rounded-2xl p-6 border-2 border-slate-700/60">
+            <div class="flex justify-between items-start mb-4">
+              <div class="text-7xl drop-shadow-2xl">🎴</div>
               ${hasFree ? `
-                <span class="free-badge bg-emerald-600 text-white text-sm font-bold px-3 py-1 rounded-full">
+                <span class="free-badge bg-emerald-600 text-white text-sm font-black px-4 py-1.5 rounded-full">
                   🎁 ${st.free_remaining}/${st.free_per_hour}
                 </span>` : `
-                <span class="bg-slate-700 text-slate-300 text-xs font-semibold px-3 py-1 rounded-full">
+                <span class="bg-slate-800 text-slate-300 text-xs font-bold px-4 py-1.5 rounded-full">
                   ⏳ ${min}m${sec.toString().padStart(2,'0')}s
                 </span>`}
             </div>
-            <h3 class="font-bold text-xl">${p.name}</h3>
-            <p class="text-slate-400 text-sm mb-3">
+            <h3 class="font-black text-2xl mb-1">${p.name}</h3>
+            <p class="text-slate-400 text-sm mb-4">
               ${hasFree
-                ? `<span class="text-emerald-400 font-semibold">Gratuit</span> · sinon ${p.price} or`
+                ? `<span class="text-emerald-400 font-bold">Gratuit disponible</span> · sinon ${p.price} or`
                 : `${p.price} or · ${p.free_per_hour} gratuits/heure`}
             </p>
-            <div class="text-xs mb-3 flex flex-wrap gap-1">
+            <div class="text-xs mb-4 flex flex-wrap gap-1.5">
               ${Object.entries(p.rarity_weights).map(([r,w]) => {
                 const rst = RARITY_STYLE[r];
-                return `<span class="px-2 py-0.5 rounded font-semibold"
-                              style="background:${rst.accent}33;color:${rst.accent};border:1px solid ${rst.accent}66">
+                return `<span class="px-2.5 py-1 rounded-full font-bold"
+                              style="background:${rst.accent}22;color:${rst.accent};border:1px solid ${rst.accent}55">
                           ${r}: ${w}%</span>`;
               }).join('')}
             </div>
-            <button class="open-pack-btn w-full ${hasFree ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-indigo-600 hover:bg-indigo-500'}
-                           p-2.5 rounded-lg font-semibold disabled:opacity-40 disabled:cursor-not-allowed
+            <button class="open-pack-btn w-full ${hasFree ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500'}
+                           p-3.5 rounded-xl font-black text-base disabled:opacity-40 disabled:cursor-not-allowed
                            hover:scale-[1.02] active:scale-[0.98]"
                     data-pack="${p.id}" ${!canOpen ? 'disabled' : ''}>
-              ${hasFree ? '🎁 Ouvrir gratuitement' : `Ouvrir (${p.price} or)`}
+              ${hasFree ? '🎁 Ouvrir gratuitement' : `Ouvrir · ${p.price} or`}
             </button>
           </div>`;
       }).join('')}
     </div>`;
-  document.querySelectorAll('.open-pack-btn').forEach(b => {
-    b.onclick = () => openPack(b.dataset.pack, b);
-  });
+  document.querySelectorAll('.open-pack-btn').forEach(b => b.onclick = () => openPack(b.dataset.pack, b));
 }
 
 async function openPack(packId, btn) {
@@ -571,124 +610,96 @@ async function openPack(packId, btn) {
   btn.textContent = '✨ Ouverture…';
   const { data, error } = await sb.rpc('open_pack', { p_pack_id: packId });
   if (error) { btn.disabled = false; btn.textContent = orig; return toast(error.message,'error'); }
-  showReveal(data);
+  showGachaReveal(data);
 }
 
 // ============================================================
-// 🎬 ANIMATION D'OUVERTURE CINÉMATIQUE
+// 🎬 ANIMATION GACHA (style Genshin)
 // ============================================================
-async function showReveal(cards) {
+async function showGachaReveal(cards) {
   const container = $('pack-modal-content');
-  const isMobile = window.innerWidth < 768;
-  const gridCols = isMobile ? 'grid-cols-2' : 'grid-cols-5';
   const totalBonus = cards.reduce((s,c) => s + (c.bonus_gold||0), 0);
   const wasFree = cards[0]?.was_free;
 
-  // ---------- PHASE 1 : Pack + fan de cartes qui apparaissent ----------
+  // ---- Phase 1 : pack qui shake ----
   container.innerHTML = `
-    <div class="reveal-stage">
-      <div class="reveal-fan" id="reveal-fan">
-        ${[0,1,2,3,4].map(i => `<div class="reveal-mini" style="--i:${i}">🎴</div>`).join('')}
-      </div>
-      <div class="reveal-pack" id="reveal-pack">🎴</div>
-      <div class="reveal-flash" id="reveal-flash"></div>
+    <div class="gacha-stage">
+      <div class="gacha-pack" id="gacha-pack">🎴</div>
     </div>`;
   show('pack-modal');
+  const pack = $('gacha-pack');
 
-  // Apparition du fan
-  await sleep(50);
-  $('reveal-fan').classList.add('visible');
-  await sleep(750);
-
-  // ---------- PHASE 2 : Charge (shake) ----------
-  $('reveal-pack').classList.add('charging');
-  $('reveal-fan').classList.add('charging');
+  await sleep(600);
+  pack.classList.add('charging');
   await sleep(700);
+  pack.classList.remove('charging');
+  pack.classList.add('burst');
 
-  // ---------- PHASE 3 : Burst ----------
-  $('reveal-pack').classList.remove('charging');
-  $('reveal-pack').classList.add('burst');
-  $('reveal-fan').classList.remove('charging');
-  $('reveal-fan').classList.add('burst');
-  $('reveal-flash').classList.add('active');
+  // Flash fullscreen
+  const fullFlash = document.createElement('div');
+  fullFlash.className = 'gacha-flash-fullscreen fire';
+  document.body.appendChild(fullFlash);
   document.body.classList.add('shake');
   setTimeout(() => document.body.classList.remove('shake'), 400);
-  await sleep(450);
+  setTimeout(() => fullFlash.remove(), 500);
 
-  // ---------- PHASE 4 : Grille de cartes face cachée ----------
+  await sleep(500);
+
+  // ---- Phase 2 : grille face cachée ----
+  const isMobile = window.innerWidth < 768;
+  const gridCols = isMobile ? 'grid-cols-2' : 'grid-cols-5';
+
   container.innerHTML = `
-    <div class="flex flex-col items-center gap-4">
+    <div class="flex flex-col items-center gap-5">
       <div class="text-center">
-        ${wasFree ? '<span class="bg-emerald-600 px-3 py-1 rounded-full text-xs font-bold">🎁 PACK GRATUIT</span>' : ''}
-        <h2 class="text-2xl font-bold mt-2">Tu as obtenu ${cards.length} cartes !</h2>
+        ${wasFree ? '<span class="bg-emerald-600 px-3 py-1 rounded-full text-xs font-black">🎁 PACK GRATUIT</span>' : ''}
+        <h2 class="text-2xl font-black mt-2">${cards.length} cartes obtenues</h2>
       </div>
-      <div class="grid ${gridCols} gap-3 w-full max-w-5xl px-2">
+      <div class="gacha-grid ${gridCols}">
         ${cards.map((c,i) => `
-          <div class="reveal-slot" data-slot="${i}" data-rarity="${c.rarity}">
-            <div class="reveal-slot-inner">
-              <div class="reveal-back">🎴</div>
-              <div class="reveal-front">${cardHTML(c, { isNew: c.is_new })}</div>
+          <div class="gacha-slot" data-slot="${i}" style="--rarity-color:${RARITY_STYLE[c.rarity].accent}">
+            <div class="gacha-beam"></div>
+            <div class="gacha-flash"></div>
+            <div class="gacha-slot-inner">
+              <div class="gacha-back">🎴</div>
+              <div class="gacha-front">${cardHTML(c, { isNew: c.is_new })}</div>
             </div>
           </div>`).join('')}
       </div>
       <div id="reveal-footer" class="opacity-0 text-center space-y-2 mt-2 transition-opacity duration-500">
-        ${totalBonus > 0 ? `<p class="text-emerald-400 font-bold text-lg">+${totalBonus} or bonus total !</p>` : ''}
-        <button id="close-reveal" class="bg-indigo-600 hover:bg-indigo-500 px-8 py-2.5 rounded-lg font-semibold
-                                       hover:scale-[1.03] active:scale-[0.97]">Continuer</button>
+        ${totalBonus > 0 ? `<p class="text-emerald-400 font-bold text-lg">+${totalBonus} or bonus</p>` : ''}
+        <button id="close-reveal" class="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 px-10 py-3 rounded-xl font-black text-base hover:scale-[1.03] active:scale-[0.97]">
+          Continuer
+        </button>
       </div>
     </div>`;
 
-  // ---------- PHASE 5 : Flip séquentiel avec effets par carte ----------
+  await sleep(300);
+
+  // ---- Phase 3 : révélation séquentielle style gacha ----
+  const slots = document.querySelectorAll('.gacha-slot');
   const rarityOrder = { common:0, uncommon:1, rare:2, epic:3, legendary:4 };
   let bestRarity = 'common';
-  const slots = document.querySelectorAll('.reveal-slot');
 
   for (let i = 0; i < slots.length; i++) {
     const slot = slots[i];
-    const rarity = cards[i].rarity;
-    const isSpecial = rarity === 'epic' || rarity === 'legendary';
+    const card = cards[i];
+    const rarity = card.rarity;
+    const color = RARITY_STYLE[rarity].accent;
+    const rarityVal = rarityOrder[rarity];
+    if (rarityVal > rarityOrder[bestRarity]) bestRarity = rarity;
 
-    // Pré-charge (petit shake) pour épique/légendaire
-    if (isSpecial) {
-      slot.classList.add('pre-charge');
-      await sleep(280);
-      slot.classList.remove('pre-charge');
-    }
-
-    // Flip !
-    slot.classList.add('flipped');
-    if (rarityOrder[rarity] > rarityOrder[bestRarity]) bestRarity = rarity;
-
-    // Confetti localisé sur la carte pour épique/légendaire
-    if (isSpecial) {
-      const rect = slot.getBoundingClientRect();
-      const x = (rect.left + rect.width/2) / window.innerWidth;
-      const y = (rect.top + rect.height/2) / window.innerHeight;
-      confetti({
-        particleCount: rarity === 'legendary' ? 70 : 30,
-        spread: rarity === 'legendary' ? 110 : 65,
-        origin: { x, y },
-        colors: rarity === 'legendary'
-          ? ['#fbbf24','#f59e0b','#fde68a','#fff']
-          : ['#a855f7','#c084fc','#e9d5ff']
-      });
-      if (rarity === 'legendary') {
-        document.body.classList.add('shake');
-        setTimeout(() => document.body.classList.remove('shake'), 400);
-      }
-    }
-
-    await sleep(isSpecial ? 450 : 280);
+    await revealSlot(slot, card, color, rarity);
+    await sleep(rarity === 'legendary' ? 400 : rarity === 'epic' ? 250 : 120);
   }
 
-  // ---------- PHASE 6 : Tilt après tous les flips ----------
   tiltAll($('pack-modal-content'));
 
-  // Confetti global si légendaire dans le lot
+  // Confetti global légendaire
   if (bestRarity === 'legendary') {
-    setTimeout(() => {
-      confetti({ particleCount: 200, spread: 140, origin:{y:0.6}, colors:['#fbbf24','#f59e0b','#fff'] });
-    }, 200);
+    confetti({ particleCount: 250, spread: 160, origin:{y:0.6}, colors:['#fbbf24','#f59e0b','#fff'] });
+  } else if (bestRarity === 'epic') {
+    confetti({ particleCount: 120, spread: 100, origin:{y:0.6}, colors:['#a855f7','#c084fc','#e9d5ff'] });
   }
 
   await sleep(400);
@@ -696,10 +707,77 @@ async function showReveal(cards) {
   $('close-reveal').onclick = closeReveal;
 }
 
+// Révélation d'une carte façon gacha
+async function revealSlot(slot, card, color, rarity) {
+  const beam = slot.querySelector('.gacha-beam');
+  const flash = slot.querySelector('.gacha-flash');
+
+  // 1. Charge : aura pulse
+  slot.classList.add('charging');
+  const chargeTime = { common: 150, uncommon: 200, rare: 250, epic: 350, legendary: 500 }[rarity];
+  await sleep(chargeTime);
+
+  // 2. Faisceau(x) de lumière
+  if (rarity === 'legendary') {
+    // Faisceau violet d'abord (faux espoir)
+    beam.style.setProperty('--beam-color', '#a855f7');
+    beam.classList.remove('fire');
+    void beam.offsetWidth;
+    beam.classList.add('fire');
+    await sleep(450);
+
+    // Flash + shake + upgrade doré
+    document.body.classList.add('shake');
+    setTimeout(() => document.body.classList.remove('shake'), 400);
+    beam.classList.remove('fire');
+    void beam.offsetWidth;
+    beam.style.setProperty('--beam-color', '#fbbf24');
+    beam.classList.add('fire', 'big');
+    await sleep(500);
+  } else if (rarity === 'epic') {
+    beam.style.setProperty('--beam-color', '#a855f7');
+    beam.classList.remove('fire'); void beam.offsetWidth;
+    beam.classList.add('fire');
+    await sleep(400);
+  } else {
+    beam.style.setProperty('--beam-color', color);
+    beam.classList.remove('fire'); void beam.offsetWidth;
+    beam.classList.add('fire');
+    await sleep(300);
+  }
+
+  // 3. Flash local + flip
+  flash.classList.remove('fire'); void flash.offsetWidth;
+  flash.classList.add('fire');
+  slot.classList.remove('charging');
+  slot.classList.add('flipped');
+  await sleep(100);
+  slot.classList.add('impact');
+
+  // 4. Confetti localisé pour épique+
+  if (rarity === 'epic' || rarity === 'legendary') {
+    const rect = slot.getBoundingClientRect();
+    confetti({
+      particleCount: rarity === 'legendary' ? 90 : 40,
+      spread: rarity === 'legendary' ? 130 : 80,
+      origin: {
+        x: (rect.left + rect.width/2) / window.innerWidth,
+        y: (rect.top + rect.height/2) / window.innerHeight
+      },
+      colors: rarity === 'legendary'
+        ? ['#fbbf24','#f59e0b','#fde68a','#fff']
+        : ['#a855f7','#c084fc','#e9d5ff']
+    });
+  }
+
+  await sleep(450);
+  slot.classList.remove('impact');
+}
+
 async function closeReveal() {
   const m = $('pack-modal');
   m.classList.add('closing');
-  await sleep(200);
+  await sleep(250);
   m.classList.remove('closing');
   hide('pack-modal');
   $('pack-modal-content').innerHTML = '';
@@ -722,17 +800,25 @@ async function renderCollection() {
   if (!data.length) { c.innerHTML = '<p class="text-slate-400">Collection vide. Ouvre un pack !</p>'; return; }
 
   const total = data.reduce((s,i)=>s+i.quantity,0);
+  const dupCount = data.reduce((s,i)=>s+Math.max(0,i.quantity-1),0);
   const byRarity = {};
   data.forEach(i => { (byRarity[i.cards.rarity] ||= []).push(i); });
   const order = ['legendary','epic','rare','uncommon','common'];
 
   c.innerHTML = `
-    <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
-      <h2 class="text-xl font-bold">Collection (${total} cartes)</h2>
-      <p class="text-slate-400 text-sm">${data.length} cartes uniques</p>
+    <div class="flex justify-between items-center mb-5 flex-wrap gap-3">
+      <div>
+        <h2 class="text-2xl font-black">Collection</h2>
+        <p class="text-slate-400 text-sm">${total} cartes · ${data.length} uniques · ${dupCount} doublons</p>
+      </div>
+      ${dupCount > 0 ? `
+        <button id="sell-all-dup" class="bg-amber-600 hover:bg-amber-500 px-4 py-2 rounded-xl font-bold text-sm hover:scale-[1.02] active:scale-[0.98]">
+          💰 Vendre ${dupCount} doublon${dupCount > 1 ? 's' : ''}
+        </button>` : ''}
     </div>
     ${order.filter(r => byRarity[r]).map(r => `
-      <h3 class="text-sm font-bold uppercase tracking-wider mb-2 mt-5" style="color:${RARITY_STYLE[r].accent}">
+      <h3 class="text-sm font-black uppercase tracking-wider mb-3 mt-6 flex items-center gap-2" style="color:${RARITY_STYLE[r].accent}">
+        <span class="inline-block w-1.5 h-1.5 rounded-full" style="background:${RARITY_STYLE[r].accent}"></span>
         ${RARITY_STYLE[r].name} (${byRarity[r].reduce((s,i)=>s+i.quantity,0)})
       </h3>
       <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-7 gap-3 mb-2">
@@ -741,8 +827,7 @@ async function renderCollection() {
             ${cardHTML({
               card_name: i.cards.name, name: i.cards.name,
               rarity: i.cards.rarity, emoji: i.cards.emoji,
-              art_seed: i.cards.art_seed, accent_color: i.cards.accent_color,
-              word_a: i.cards.word_a, word_b: i.cards.word_b
+              art_seed: i.cards.art_seed, accent_color: i.cards.accent_color
             }, { qty: i.quantity })}
           </div>`).join('')}
       </div>
@@ -758,33 +843,47 @@ async function renderCollection() {
       qty: i.quantity
     };
   });
+
+  if (dupCount > 0) {
+    $('sell-all-dup').onclick = sellAllDuplicates;
+  }
+}
+
+async function sellAllDuplicates() {
+  if (!confirm('Vendre tous les doublons ? (garde 1 de chaque)')) return;
+  const { data, error } = await sb.rpc('sell_all_duplicates');
+  if (error) return toast(error.message,'error');
+  toast(`💰 +${data[0].total_gold} or · ${data[0].cards_sold} cartes vendues`,'success');
+  await refreshProfile();
+  await renderCollection();
+  await renderPacks();
 }
 
 function showCardDetail(cardId) {
   const info = window.__collectionMap?.[cardId];
   if (!info) return;
   const st = RARITY_STYLE[info.card.rarity];
-  const sellPrice = SELL_PRICE[info.card.rarity] || 10;
+  const sellPrice = SELL_PRICE[info.card.rarity] || 5;
   const card = { ...info.card, card_name: info.card.name };
 
   $('detail-modal-content').innerHTML = `
-    <div class="bg-slate-800/95 rounded-2xl p-6 max-w-sm w-full border border-white/10">
+    <div class="bg-slate-900/95 rounded-2xl p-6 max-w-sm w-full border border-white/10 shadow-2xl">
       <div class="mx-auto mb-4" style="max-width:280px">${cardHTML(card)}</div>
-      <h3 class="font-bold text-center text-lg mb-1">${card.name}</h3>
-      <p class="text-center text-sm mb-4" style="color:${st.accent}">${st.name}</p>
-      <div class="text-xs text-slate-400 space-y-1 mb-4 bg-slate-900/60 rounded-lg p-3">
-        <div class="flex justify-between"><span>Mot A</span><span class="text-slate-200">${card.word_a || '?'}</span></div>
-        <div class="flex justify-between"><span>Mot B</span><span class="text-slate-200">${card.word_b || '?'}</span></div>
-        <div class="flex justify-between"><span>Quantité</span><span class="text-slate-200">×${info.qty}</span></div>
-        <div class="flex justify-between"><span>Valeur</span><span class="text-amber-400">${sellPrice} or</span></div>
+      <h3 class="font-black text-center text-xl mb-1">${card.name}</h3>
+      <p class="text-center text-sm font-bold mb-4" style="color:${st.accent}">${st.name}</p>
+      <div class="text-xs text-slate-400 space-y-1.5 mb-4 bg-slate-800/60 rounded-xl p-3">
+        <div class="flex justify-between"><span>Mot A</span><span class="text-slate-200 font-semibold">${card.word_a || '?'}</span></div>
+        <div class="flex justify-between"><span>Mot B</span><span class="text-slate-200 font-semibold">${card.word_b || '?'}</span></div>
+        <div class="flex justify-between"><span>Quantité</span><span class="text-slate-200 font-semibold">×${info.qty}</span></div>
+        <div class="flex justify-between"><span>Valeur</span><span class="text-amber-400 font-semibold">${sellPrice} or</span></div>
       </div>
       <div class="flex gap-2">
         ${info.qty > 1 ? `
           <button onclick="sellDuplicate('${cardId}','${card.name.replace(/'/g,'')}',1)"
-                  class="flex-1 bg-amber-600 hover:bg-amber-500 p-2 rounded-lg font-semibold text-sm">💰 Vendre 1</button>
+                  class="flex-1 bg-amber-600 hover:bg-amber-500 p-2.5 rounded-xl font-bold text-sm">💰 1</button>
           <button onclick="sellDuplicate('${cardId}','${card.name.replace(/'/g,'')}',${info.qty-1})"
-                  class="flex-1 bg-amber-700 hover:bg-amber-600 p-2 rounded-lg font-semibold text-sm">💰 Tout</button>` : ''}
-        <button onclick="closeDetail()" class="flex-1 bg-slate-700 hover:bg-slate-600 p-2 rounded-lg font-semibold text-sm">Fermer</button>
+                  class="flex-1 bg-amber-700 hover:bg-amber-600 p-2.5 rounded-xl font-bold text-sm">💰 ${info.qty-1}</button>` : ''}
+        <button onclick="closeDetail()" class="flex-1 bg-slate-700 hover:bg-slate-600 p-2.5 rounded-xl font-bold text-sm">Fermer</button>
       </div>
     </div>`;
   show('detail-modal');
@@ -813,41 +912,44 @@ async function renderFriends() {
     sb.rpc('friend_list'), sb.rpc('friend_requests')
   ]);
   c.innerHTML = `
-    <h2 class="text-xl font-bold mb-4">👥 Amis</h2>
-    <div class="bg-slate-800/60 rounded-2xl p-4 mb-4 border border-white/10">
+    <div class="mb-5">
+      <h2 class="text-2xl font-black mb-1">Amis</h2>
+      <p class="text-slate-400 text-sm">Ajoute des joueurs pour comparer vos collections</p>
+    </div>
+    <div class="bg-slate-900/60 rounded-2xl p-4 mb-4 border border-white/10">
       <h3 class="font-bold mb-2 text-sm text-slate-300">➕ Ajouter un ami</h3>
       <div class="flex gap-2">
         <input id="friend-input" type="text" placeholder="Pseudo…"
-               class="flex-1 p-2 rounded-lg bg-slate-900 border border-white/10 focus:outline-none focus:ring-2 ring-indigo-500">
-        <button id="friend-send" class="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg font-semibold text-sm">Envoyer</button>
+               class="flex-1 p-2.5 rounded-xl bg-slate-800 border border-white/10 focus:outline-none focus:ring-2 ring-indigo-500">
+        <button id="friend-send" class="bg-indigo-600 hover:bg-indigo-500 px-5 py-2.5 rounded-xl font-bold text-sm">Envoyer</button>
       </div>
     </div>
     ${requests && requests.length ? `
-      <div class="bg-slate-800/60 rounded-2xl p-4 mb-4 border border-amber-500/30">
-        <h3 class="font-bold mb-2 text-sm text-amber-300">📩 Demandes reçues (${requests.length})</h3>
+      <div class="bg-slate-900/60 rounded-2xl p-4 mb-4 border border-amber-500/30">
+        <h3 class="font-bold mb-2 text-sm text-amber-300">📩 Demandes (${requests.length})</h3>
         <div class="space-y-2">
           ${requests.map(r => `
-            <div class="flex justify-between items-center bg-slate-900/60 rounded-lg p-2">
-              <span class="text-sm font-semibold">${r.from_username}</span>
+            <div class="flex justify-between items-center bg-slate-800/70 rounded-xl p-2.5">
+              <span class="text-sm font-bold">${r.from_username}</span>
               <div class="flex gap-1">
-                <button onclick="respondFriend(${r.id},true)" class="bg-emerald-600 hover:bg-emerald-500 px-3 py-1 rounded-lg text-xs font-semibold">✓</button>
-                <button onclick="respondFriend(${r.id},false)" class="bg-red-600 hover:bg-red-500 px-3 py-1 rounded-lg text-xs font-semibold">✗</button>
+                <button onclick="respondFriend(${r.id},true)" class="bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 rounded-lg text-xs font-bold">✓</button>
+                <button onclick="respondFriend(${r.id},false)" class="bg-red-600 hover:bg-red-500 px-3 py-1.5 rounded-lg text-xs font-bold">✗</button>
               </div>
             </div>`).join('')}
         </div>
       </div>` : ''}
-    <div class="bg-slate-800/60 rounded-2xl p-4 border border-white/10">
+    <div class="bg-slate-900/60 rounded-2xl p-4 border border-white/10">
       <h3 class="font-bold mb-2 text-sm text-slate-300">🎉 Mes amis (${friends?.length || 0})</h3>
-      ${!friends?.length ? '<p class="text-slate-400 text-sm">Aucun ami.</p>' : `
+      ${!friends?.length ? '<p class="text-slate-400 text-sm">Aucun ami pour le moment.</p>' : `
         <div class="space-y-2">
           ${friends.map(f => `
-            <div class="flex justify-between items-center bg-slate-900/60 rounded-lg p-2">
+            <div class="flex justify-between items-center bg-slate-800/70 rounded-xl p-2.5">
               <div class="flex items-center gap-2">
-                <span class="text-sm font-semibold">${f.username}</span>
-                <span class="text-xs px-1.5 py-0.5 rounded ${ROLE_COLORS[f.role]}">${f.role}</span>
+                <span class="text-sm font-bold">${f.username}</span>
+                <span class="text-xs px-1.5 py-0.5 rounded-full font-bold ${ROLE_COLORS[f.role]}">${f.role}</span>
                 <span class="text-xs text-slate-400">💰 ${f.gold}</span>
               </div>
-              <button onclick="removeFriend('${f.friend_id}')" class="bg-red-700 hover:bg-red-600 px-2 py-1 rounded-lg text-xs">Retirer</button>
+              <button onclick="removeFriend('${f.friend_id}')" class="bg-red-700 hover:bg-red-600 px-2.5 py-1 rounded-lg text-xs font-bold">Retirer</button>
             </div>`).join('')}
         </div>`}
     </div>`;
@@ -878,17 +980,17 @@ async function removeFriend(friendId) {
 }
 
 // ============================================================
-// ADMIN v3
+// ADMIN
 // ============================================================
 async function renderAdmin() {
   const c = $('view-admin');
   c.innerHTML = `
-    <h2 class="text-xl font-bold mb-4">🛡️ Administration</h2>
-    <div class="bg-slate-800/60 rounded-xl p-1 mb-4 flex gap-1 flex-wrap">
-      <button data-tab="users" class="admin-tab px-3 py-2 rounded-lg text-sm font-semibold ${adminTab==='users'?'active':''}">👥 Utilisateurs</button>
-      <button data-tab="cards" class="admin-tab px-3 py-2 rounded-lg text-sm font-semibold ${adminTab==='cards'?'active':''}">🎴 Cartes</button>
-      <button data-tab="packs" class="admin-tab px-3 py-2 rounded-lg text-sm font-semibold ${adminTab==='packs'?'active':''}">📦 Packs</button>
-      <button data-tab="logs"  class="admin-tab px-3 py-2 rounded-lg text-sm font-semibold ${adminTab==='logs'?'active':''}">📜 Logs</button>
+    <h2 class="text-2xl font-black mb-4">Administration</h2>
+    <div class="bg-slate-900/60 rounded-2xl p-1.5 mb-4 flex gap-1 flex-wrap border border-white/10">
+      <button data-tab="users" class="admin-tab px-4 py-2 rounded-xl text-sm font-bold ${adminTab==='users'?'active':''}">👥 Utilisateurs</button>
+      <button data-tab="cards" class="admin-tab px-4 py-2 rounded-xl text-sm font-bold ${adminTab==='cards'?'active':''}">🎴 Cartes</button>
+      <button data-tab="packs" class="admin-tab px-4 py-2 rounded-xl text-sm font-bold ${adminTab==='packs'?'active':''}">📦 Packs</button>
+      <button data-tab="logs"  class="admin-tab px-4 py-2 rounded-xl text-sm font-bold ${adminTab==='logs'?'active':''}">📜 Logs</button>
     </div>
     <div id="admin-content"></div>`;
   document.querySelectorAll('.admin-tab').forEach(b => {
@@ -908,65 +1010,55 @@ async function renderAdminUsers(content) {
     sb.rpc('admin_stats')
   ]);
   const isAdmin = profile.role === 'admin';
-  const canBan  = ['admin','super_modo'].includes(profile.role);
+  const canBan = ['admin','super_modo'].includes(profile.role);
   const s = stats?.[0];
 
   content.innerHTML = `
     ${s ? `
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-      <div class="bg-slate-800/60 rounded-xl p-3 border border-white/10">
-        <div class="text-xs text-slate-400 uppercase">Utilisateurs</div><div class="text-2xl font-bold">${s.total_users}</div>
+      <div class="bg-slate-900/60 rounded-xl p-3 border border-white/10">
+        <div class="text-xs text-slate-400 uppercase font-bold">Utilisateurs</div><div class="text-2xl font-black">${s.total_users}</div>
       </div>
-      <div class="bg-slate-800/60 rounded-xl p-3 border border-white/10">
-        <div class="text-xs text-slate-400 uppercase">Cartes possédées</div><div class="text-2xl font-bold">${s.total_cards_owned}</div>
+      <div class="bg-slate-900/60 rounded-xl p-3 border border-white/10">
+        <div class="text-xs text-slate-400 uppercase font-bold">Cartes possédées</div><div class="text-2xl font-black">${s.total_cards_owned}</div>
       </div>
-      <div class="bg-slate-800/60 rounded-xl p-3 border border-white/10">
-        <div class="text-xs text-slate-400 uppercase">Packs ouverts</div><div class="text-2xl font-bold">${s.total_packs_opened}</div>
+      <div class="bg-slate-900/60 rounded-xl p-3 border border-white/10">
+        <div class="text-xs text-slate-400 uppercase font-bold">Packs ouverts</div><div class="text-2xl font-black">${s.total_packs_opened}</div>
       </div>
-      <div class="bg-slate-800/60 rounded-xl p-3 border border-white/10">
-        <div class="text-xs text-slate-400 uppercase">Or total</div><div class="text-2xl font-bold text-amber-400">${s.total_gold}</div>
+      <div class="bg-slate-900/60 rounded-xl p-3 border border-white/10">
+        <div class="text-xs text-slate-400 uppercase font-bold">Or total</div><div class="text-2xl font-black text-amber-400">${s.total_gold}</div>
       </div>
     </div>` : ''}
     <input id="admin-search" type="text" placeholder="🔍 Rechercher…"
-           class="w-full p-2 rounded-lg bg-slate-900 border border-white/10 mb-3 focus:outline-none focus:ring-2 ring-indigo-500">
-    <div class="bg-slate-800/60 rounded-xl overflow-x-auto border border-white/10">
+           class="w-full p-2.5 rounded-xl bg-slate-900 border border-white/10 mb-3 focus:outline-none focus:ring-2 ring-indigo-500">
+    <div class="bg-slate-900/60 rounded-xl overflow-x-auto border border-white/10">
       <table class="w-full text-sm">
-        <thead class="bg-slate-900/60">
+        <thead class="bg-slate-950/60">
           <tr>
-            <th class="p-2 text-left">Utilisateur</th>
-            <th class="p-2 text-left">Rôle</th>
-            <th class="p-2 text-left">Or</th>
-            <th class="p-2 text-left">Statut</th>
-            <th class="p-2 text-left">Actions</th>
+            <th class="p-2 text-left">Utilisateur</th><th class="p-2 text-left">Rôle</th>
+            <th class="p-2 text-left">Or</th><th class="p-2 text-left">Statut</th><th class="p-2 text-left">Actions</th>
           </tr>
         </thead>
         <tbody>
           ${users.map(u => `
-            <tr class="border-t border-slate-700/50 admin-row" data-search="${u.username.toLowerCase()}">
-              <td class="p-2">${u.username}</td>
-              <td class="p-2"><span class="text-xs px-2 py-0.5 rounded font-semibold ${ROLE_COLORS[u.role]}">${u.role}</span></td>
+            <tr class="border-t border-slate-800/60 admin-row" data-search="${u.username.toLowerCase()}">
+              <td class="p-2 font-semibold">${u.username}</td>
+              <td class="p-2"><span class="text-xs px-2 py-0.5 rounded-full font-bold ${ROLE_COLORS[u.role]}">${u.role}</span></td>
               <td class="p-2">${u.gold}</td>
               <td class="p-2">${u.banned
-                ? '<span class="text-red-400">Banni</span>'
-                : '<span class="text-emerald-400">Actif</span>'}</td>
+                ? '<span class="text-red-400 font-semibold">Banni</span>'
+                : '<span class="text-emerald-400 font-semibold">Actif</span>'}</td>
               <td class="p-2 flex gap-1 flex-wrap">
                 ${isAdmin && u.id !== profile.id ? `
-                  <select data-user="${u.id}" class="role-select bg-slate-700 rounded p-1 text-xs">
+                  <select data-user="${u.id}" class="role-select bg-slate-800 rounded-lg p-1 text-xs">
                     <option value="">-- rôle --</option>
-                    <option value="user">user</option>
-                    <option value="modo">modo</option>
-                    <option value="super_modo">super_modo</option>
-                    <option value="admin">admin</option>
+                    <option value="user">user</option><option value="modo">modo</option>
+                    <option value="super_modo">super_modo</option><option value="admin">admin</option>
                   </select>
-                  <button class="grant-gold bg-amber-700 hover:bg-amber-600 px-2 py-1 rounded text-xs"
-                          data-user="${u.id}" data-username="${u.username}">+or</button>
-                  <button class="grant-card bg-purple-700 hover:bg-purple-600 px-2 py-1 rounded text-xs"
-                          data-user="${u.id}" data-username="${u.username}">+carte</button>` : ''}
+                  <button class="grant-gold bg-amber-700 hover:bg-amber-600 px-2 py-1 rounded-lg text-xs font-bold" data-user="${u.id}" data-username="${u.username}">+or</button>
+                  <button class="grant-card bg-purple-700 hover:bg-purple-600 px-2 py-1 rounded-lg text-xs font-bold" data-user="${u.id}" data-username="${u.username}">+carte</button>` : ''}
                 ${canBan && u.id !== profile.id ? `
-                  <button class="ban-btn bg-slate-700 hover:bg-slate-600 px-2 py-1 rounded text-xs"
-                          data-user="${u.id}" data-banned="${u.banned}">
-                    ${u.banned ? 'Débannir' : 'Bannir'}
-                  </button>` : ''}
+                  <button class="ban-btn bg-slate-700 hover:bg-slate-600 px-2 py-1 rounded-lg text-xs font-bold" data-user="${u.id}" data-banned="${u.banned}">${u.banned ? 'Débannir' : 'Bannir'}</button>` : ''}
               </td>
             </tr>`).join('')}
         </tbody>
@@ -974,9 +1066,7 @@ async function renderAdminUsers(content) {
     </div>`;
   $('admin-search')?.addEventListener('input', e => {
     const q = e.target.value.toLowerCase();
-    document.querySelectorAll('.admin-row').forEach(r => {
-      r.style.display = r.dataset.search.includes(q) ? '' : 'none';
-    });
+    document.querySelectorAll('.admin-row').forEach(r => r.style.display = r.dataset.search.includes(q) ? '' : 'none');
   });
   document.querySelectorAll('.role-select').forEach(s => s.onchange = () => setRole(s.dataset.user, s.value));
   document.querySelectorAll('.ban-btn').forEach(b => b.onclick = () => toggleBan(b.dataset.user, b.dataset.banned === 'true'));
@@ -991,25 +1081,21 @@ async function renderAdminCards(content) {
     sb.rpc('admin_list_cards', { p_limit: 60, p_offset: 0 })
   ]);
   content.innerHTML = `
-    <div class="bg-slate-800/60 rounded-xl p-4 mb-4 border border-white/10 flex justify-between items-center flex-wrap gap-3">
-      <div>
-        <div class="text-xs text-slate-400 uppercase">Cartes générées</div>
-        <div class="text-3xl font-bold">${total}</div>
-      </div>
+    <div class="bg-slate-900/60 rounded-xl p-4 mb-4 border border-white/10 flex justify-between items-center flex-wrap gap-3">
+      <div><div class="text-xs text-slate-400 uppercase font-bold">Cartes générées</div><div class="text-3xl font-black">${total}</div></div>
       <div class="flex gap-2 items-center">
         <input id="gen-count" type="number" value="10" min="1" max="100"
-               class="w-20 p-2 rounded-lg bg-slate-900 border border-white/10 focus:outline-none">
-        <button id="gen-cards" class="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg font-semibold text-sm">🎲 Générer</button>
+               class="w-20 p-2 rounded-lg bg-slate-800 border border-white/10">
+        <button id="gen-cards" class="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg font-bold text-sm">🎲 Générer</button>
       </div>
     </div>
-    <p class="text-xs text-slate-500 mb-3">⚠️ Génère par petites quantités (10-20) pour économiser le stockage.</p>
-    <div class="bg-slate-800/60 rounded-xl p-4 border border-white/10">
+    <div class="bg-slate-900/60 rounded-xl p-4 border border-white/10">
       <h3 class="font-bold text-sm mb-2">60 dernières cartes</h3>
       <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 max-h-96 overflow-y-auto">
         ${(cards || []).map(c => `
-          <div class="bg-slate-900/60 rounded-lg p-2 text-xs border border-white/5">
+          <div class="bg-slate-800/60 rounded-lg p-2 text-xs border border-white/5">
             <div class="text-3xl text-center">${c.emoji}</div>
-            <div class="font-semibold truncate mt-1">${c.name}</div>
+            <div class="font-bold truncate mt-1">${c.name}</div>
             <div class="text-[10px]" style="color:${RARITY_STYLE[c.rarity].accent}">${RARITY_STYLE[c.rarity].name}</div>
           </div>`).join('')}
       </div>
@@ -1033,39 +1119,28 @@ async function renderAdminPacks(content) {
   content.innerHTML = `
     <div class="space-y-3">
       ${packs.map(p => `
-        <div class="bg-slate-800/60 rounded-xl p-4 border border-white/10">
+        <div class="bg-slate-900/60 rounded-xl p-4 border border-white/10">
           <div class="flex justify-between items-center mb-3">
             <h3 class="font-bold">${p.name}</h3>
-            <label class="flex items-center gap-2 text-xs">
-              <input type="checkbox" data-id="${p.id}" data-field="active" ${p.is_active?'checked':''}
-                     class="pack-edit w-4 h-4"> Actif
+            <label class="flex items-center gap-2 text-xs font-bold">
+              <input type="checkbox" data-id="${p.id}" data-field="active" ${p.is_active?'checked':''} class="w-4 h-4"> Actif
             </label>
           </div>
           <div class="grid grid-cols-2 gap-2 mb-3">
-            <div>
-              <label class="text-xs text-slate-400">Prix (or)</label>
-              <input type="number" data-id="${p.id}" data-field="price" value="${p.price}"
-                     class="pack-edit w-full p-2 rounded-lg bg-slate-900 border border-white/10 text-sm">
-            </div>
-            <div>
-              <label class="text-xs text-slate-400">Gratuits/heure</label>
-              <input type="number" data-id="${p.id}" data-field="free" value="${p.free_per_hour}"
-                     class="pack-edit w-full p-2 rounded-lg bg-slate-900 border border-white/10 text-sm">
-            </div>
+            <div><label class="text-xs text-slate-400 font-bold">Prix (or)</label>
+              <input type="number" data-id="${p.id}" data-field="price" value="${p.price}" class="w-full p-2 rounded-lg bg-slate-800 border border-white/10 text-sm"></div>
+            <div><label class="text-xs text-slate-400 font-bold">Gratuits/heure</label>
+              <input type="number" data-id="${p.id}" data-field="free" value="${p.free_per_hour}" class="w-full p-2 rounded-lg bg-slate-800 border border-white/10 text-sm"></div>
           </div>
           <details class="mb-3">
-            <summary class="text-xs text-slate-400 cursor-pointer">Poids de rareté</summary>
+            <summary class="text-xs text-slate-400 cursor-pointer font-bold">Poids de rareté</summary>
             <div class="grid grid-cols-5 gap-1 mt-2">
               ${Object.entries(p.rarity_weights).map(([r,w]) => `
-                <div>
-                  <label class="text-[10px]" style="color:${RARITY_STYLE[r].accent}">${r}</label>
-                  <input type="number" step="0.1" data-id="${p.id}" data-rarity="${r}"
-                         class="pack-weight w-full p-1 rounded bg-slate-900 border border-white/10 text-xs"
-                         value="${w}">
-                </div>`).join('')}
+                <div><label class="text-[10px] font-bold" style="color:${RARITY_STYLE[r].accent}">${r}</label>
+                  <input type="number" step="0.1" data-id="${p.id}" data-rarity="${r}" value="${w}" class="w-full p-1 rounded bg-slate-800 border border-white/10 text-xs"></div>`).join('')}
             </div>
           </details>
-          <button data-id="${p.id}" class="save-pack bg-emerald-600 hover:bg-emerald-500 w-full py-1.5 rounded-lg text-sm font-semibold">💾 Enregistrer</button>
+          <button data-id="${p.id}" class="save-pack bg-emerald-600 hover:bg-emerald-500 w-full py-2 rounded-lg text-sm font-bold">💾 Enregistrer</button>
         </div>`).join('')}
     </div>`;
   document.querySelectorAll('.save-pack').forEach(b => {
@@ -1075,12 +1150,8 @@ async function renderAdminPacks(content) {
       const free = parseInt(document.querySelector(`input[data-id="${id}"][data-field="free"]`).value);
       const active = document.querySelector(`input[data-id="${id}"][data-field="active"]`).checked;
       const weights = {};
-      document.querySelectorAll(`input[data-id="${id}"][data-rarity]`).forEach(i => {
-        weights[i.dataset.rarity] = parseFloat(i.value);
-      });
-      const { error } = await sb.rpc('admin_update_pack', {
-        p_id: id, p_price: price, p_free_per_hour: free, p_weights: weights, p_active: active
-      });
+      document.querySelectorAll(`input[data-id="${id}"][data-rarity]`).forEach(i => { weights[i.dataset.rarity] = parseFloat(i.value); });
+      const { error } = await sb.rpc('admin_update_pack', { p_id: id, p_price: price, p_free_per_hour: free, p_weights: weights, p_active: active });
       if (error) return toast(error.message,'error');
       toast('Pack mis à jour','success');
       await loadPackStatuses();
@@ -1094,27 +1165,25 @@ async function renderAdminLogs(content) {
   if (error) return toast(error.message,'error');
   const actions = [...new Set((logs || []).map(l => l.action))];
   content.innerHTML = `
-    <div class="bg-slate-800/60 rounded-xl p-4 border border-white/10">
+    <div class="bg-slate-900/60 rounded-xl p-4 border border-white/10">
       <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
         <h3 class="font-bold text-sm">📜 Journal (${logs?.length || 0})</h3>
-        <select id="log-filter" class="bg-slate-900 p-2 rounded-lg border border-white/10 text-sm">
+        <select id="log-filter" class="bg-slate-800 p-2 rounded-lg border border-white/10 text-sm">
           <option value="">Toutes les actions</option>
           ${actions.map(a => `<option value="${a}">${a}</option>`).join('')}
         </select>
       </div>
       <div class="space-y-1 max-h-[600px] overflow-y-auto text-xs">
         ${(logs || []).map(l => `
-          <div class="log-row flex justify-between gap-2 py-1.5 border-b border-slate-700/30" data-action="${l.action}">
-            <span><b class="text-indigo-300">${l.actor}</b> — <span class="text-slate-300">${l.action}</span></span>
+          <div class="log-row flex justify-between gap-2 py-1.5 border-b border-slate-800/60" data-action="${l.action}">
+            <span><b class="text-indigo-300">${l.actor}</b> — ${l.action}</span>
             <span class="text-slate-400">${new Date(l.at).toLocaleString('fr-FR')}</span>
           </div>`).join('')}
       </div>
     </div>`;
   $('log-filter').addEventListener('change', e => {
     const v = e.target.value;
-    document.querySelectorAll('.log-row').forEach(r => {
-      r.style.display = !v || r.dataset.action === v ? '' : 'none';
-    });
+    document.querySelectorAll('.log-row').forEach(r => r.style.display = !v || r.dataset.action === v ? '' : 'none');
   });
 }
 
@@ -1149,19 +1218,19 @@ async function grantCard(userId, username) {
 }
 
 // ============================================================
-// NAV & bootstrap
+// NAV
 // ============================================================
 function bindNav() {
   document.querySelectorAll('.nav-btn').forEach(btn => {
     btn.onclick = () => {
       document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
       document.querySelectorAll('.nav-btn').forEach(b => {
-        b.classList.remove('bg-indigo-600');
-        if (b.dataset.view !== 'packs') b.classList.add('hover:bg-slate-700');
+        b.classList.remove('active');
+        if (b.dataset.view !== 'packs') b.classList.add('text-slate-300');
       });
       $(`view-${btn.dataset.view}`).classList.remove('hidden');
-      btn.classList.add('bg-indigo-600');
-      btn.classList.remove('hover:bg-slate-700');
+      btn.classList.add('active');
+      btn.classList.remove('text-slate-300');
       if (btn.dataset.view === 'packs') renderPacks();
       if (btn.dataset.view === 'collection') renderCollection();
       if (btn.dataset.view === 'friends') renderFriends();
@@ -1181,7 +1250,7 @@ async function enterApp() {
 }
 function leaveApp() { profile = null; hide('main-app'); show('auth-screen'); }
 
-// Compte à rebours live
+// Compte à rebours
 setInterval(async () => {
   if (!profile || $('view-packs').classList.contains('hidden')) return;
   await loadPackStatuses();
@@ -1190,15 +1259,13 @@ setInterval(async () => {
     if (!btn) return;
     const st = packStatuses[btn.dataset.pack];
     if (!st) return;
-    const badge = tile.querySelector('.free-badge, span.bg-slate-700');
+    const badge = tile.querySelector('.free-badge, span.bg-slate-800');
     if (st.free_remaining > 0 && badge && !badge.classList.contains('free-badge')) {
       renderPacks();
     } else if (!st.free_remaining && badge) {
       const min = Math.floor(st.seconds_left / 60);
       const sec = st.seconds_left % 60;
-      if (badge.textContent.includes('⏳')) {
-        badge.textContent = `⏳ ${min}m${sec.toString().padStart(2,'0')}s`;
-      }
+      if (badge.textContent.includes('⏳')) badge.textContent = `⏳ ${min}m${sec.toString().padStart(2,'0')}s`;
     }
   });
 }, 1000);
